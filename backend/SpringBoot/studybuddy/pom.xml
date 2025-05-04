@@ -65,6 +65,17 @@
 			<version>1.18.38</version>
 			<scope>provided</scope>
 		</dependency>
+		<!-- BCrypt Password Hasher -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-bom</artifactId>
+			<version>6.4.5</version>
+		</dependency>
+
 	</dependencies>
 
 
