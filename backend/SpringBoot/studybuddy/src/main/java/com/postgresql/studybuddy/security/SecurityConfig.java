@@ -1,5 +1,6 @@
 package com.postgresql.studybuddy.security;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -50,6 +51,10 @@ public class SecurityConfig {
      * - return http.build():
      *     - Finalizes and builds the security filter chain with all these rules.
      */
+
+    @Autowired
+    private CustomOAuth2UserService customOAuth2UserService;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -58,7 +63,9 @@ public class SecurityConfig {
                 .requestMatchers("/signup", "/login").permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .formLogin().disable(); // 🚫 Disable form-based login
+                .oauth2Login()
+                .userInfoEndpoint()
+                .userService(customOAuth2UserService); // use your custom service
 
         return http.build();
     }
