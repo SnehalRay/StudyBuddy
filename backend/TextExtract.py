@@ -18,7 +18,7 @@ FILE_TOOL = {"type":"file_search"}
 def upload_file(upload: UploadFile) -> str:
     "returns file id of uploaded file"
     response = client.files.create(
-        file=(upload.filename, upload.file, ".pdf"),
+        file=(upload.filename, upload.file, upload.content_type),
         purpose="assistants"
     )
     return response.id
