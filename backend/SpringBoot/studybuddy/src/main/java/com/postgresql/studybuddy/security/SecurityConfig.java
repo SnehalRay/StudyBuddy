@@ -1,5 +1,8 @@
 package com.postgresql.studybuddy.security;
 
+import com.postgresql.studybuddy.security.Oauth.CustomOAuth2UserService;
+import com.postgresql.studybuddy.security.Oauth.OAuth2LoginSuccessHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -7,6 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 
 /**
@@ -16,6 +20,7 @@ import org.springframework.security.web.SecurityFilterChain;
  * If Bean is not used, you manage it easily
  */
 
+@Slf4j
 @Configuration
 public class SecurityConfig {
     @Bean
@@ -55,17 +60,26 @@ public class SecurityConfig {
     @Autowired
     private CustomOAuth2UserService customOAuth2UserService;
 
+    @Autowired
+    private OAuth2LoginSuccessHandler successHandler;
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
         http
                 .csrf().disable()
                 .authorizeHttpRequests()
-                .requestMatchers("/signup", "/login").permitAll()
+                .requestMatchers("/signup", "/login","/verifyToken").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .oauth2Login()
                 .userInfoEndpoint()
-                .userService(customOAuth2UserService); // use your custom service
+                .userService(customOAuth2UserService) // use your custom service
+                .and()
+                .successHandler(successHandler);
+
+        // ✅ Apply JWT filter outside of the oauth2Login() chain
+        http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
 
         return http.build();
     }
