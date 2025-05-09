@@ -12,10 +12,10 @@ Backend
 3. AS A USER, I CAN UPLOAD PDF / DOCS TO A FOLDER
 
 
-4. As a system, I will extract text from documents using Python
+4. As a system, I will extract text from documents using Python  _/
 
 
-5. As a system, I will summarize the documents with GPT / BART
+5. As a system, I will summarize the documents with GPT / BART _/
 
 
 6. As a user, I can listen to voice summary in character's brain rot voice (Eg: Peter Griffin)
