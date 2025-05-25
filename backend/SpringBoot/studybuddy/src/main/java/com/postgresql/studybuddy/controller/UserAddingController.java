@@ -1,4 +1,4 @@
-package com.postgresql.studybuddy.controller.userController;
+package com.postgresql.studybuddy.controller;
 
 
 
