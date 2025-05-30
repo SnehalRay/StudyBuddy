@@ -6,20 +6,22 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "folders")
+@Table(name="files")
 
-public class Folder {
+public class File {
     @Id
     @Column(unique = true, nullable = false)
     private String id;
 
+
     private String name;
 
-    @ManyToOne
-    @JoinColumn(name = "owner_id")
-    private User owner;
+    @Column(name = "s3_key")
+    private String s3Key;
 
-    private String awsDirectory;
+    @ManyToOne
+    @JoinColumn(name="folder_id")
+    private Folder folder;
 
 
 }

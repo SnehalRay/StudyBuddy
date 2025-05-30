@@ -68,7 +68,7 @@ public class SecurityConfig {
         http
                 .csrf().disable()
                 .authorizeHttpRequests()
-                .requestMatchers("/signup", "/login","/verifyToken","/folder/create","/upload/files").permitAll()
+                .requestMatchers("/signup", "/login","/logout","/verifyToken","/folder/create","/folder/open","/folder/exitFolder","/upload/files","/file/upload").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .oauth2Login()

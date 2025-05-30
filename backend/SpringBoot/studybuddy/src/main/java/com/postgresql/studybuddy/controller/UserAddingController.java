@@ -7,9 +7,11 @@ import com.postgresql.studybuddy.security.JwtUtils;
 import com.postgresql.studybuddy.repository.UserRepo;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -157,6 +159,21 @@ public class UserAddingController {
         }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("JWT cookie not found");
+    }
+
+    //Log Out as a user
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> exitFolder(HttpServletResponse response){
+        //Create a new cookie with the same name and set max age to 0 for deletion
+        ResponseCookie deleteCookie = ResponseCookie.from("jwt","")
+                .httpOnly(true)
+                .path("/")
+                .maxAge(0)
+                .build();
+        response.setHeader("Set-Cookie",deleteCookie.toString());
+
+        return ResponseEntity.ok("User is logged out.");
     }
 
 

@@ -15,4 +15,9 @@ public interface FolderRepo extends JpaRepository<Folder, String > {
     // Optional: find all folders owned by a specific user
     List<Folder> findByOwner(User owner);
 
+    boolean existsByNameAndOwner(String name, User owner);
+
+    Optional<Folder> findByNameAndOwner(String name, User owner);
+
+
 }
