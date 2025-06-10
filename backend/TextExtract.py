@@ -155,7 +155,6 @@ def get_fileid(cookie_header: str, cookie_name: str = "folderSession") -> str:
         if name == cookie_name and val:
             # Returns the decoded value
             decoded = unquote_plus(val)
-            print(decoded)
             return decoded
     raise ValueError(f"cookie {cookie_name} not found in header")
 
@@ -199,9 +198,7 @@ def summarize(cookie_header: str, prompt: str, cookie_name: str="folderSession")
     # Wrap in upload file
     ext = os.path.splitext(file_key)[1] or ""
     fname = os.path.basename(file_key).split("|")[0].strip(" ") # Removes spaces, takes the filename only and excludes the email
-    print(fname)
     upload_blob = make_uploadfile(raw, fname, "application/pdf")
-    print(upload_blob.content_type)
  
 
     file_id = upload_file(upload_blob)
@@ -211,9 +208,6 @@ def summarize(cookie_header: str, prompt: str, cookie_name: str="folderSession")
 
     return assistant_id, thread_id, reply
 
-reply = summarize("folderSession=2c5d806f82; Path=/; Max-Age=3600; Expires=Tue, 10 Jun 2025 18:57:34 GMT; HttpOnly", "what is in this document peter")[2]
-
-print(reply)
 
 
 
