@@ -156,7 +156,7 @@ def get_fileid(cookie_header: str, cookie_name: str = "folderSession") -> str:
             # Returns the decoded value
             decoded = unquote_plus(val)
             return decoded
-    raise ValueError(f"cookie {cookie_name} not found in header")
+    raise HTTPException(status_code=400, detail=f"Cookie '{cookie_name}' not found in header")
 
 def download_s3_object(key: str) -> bytes:
     """
