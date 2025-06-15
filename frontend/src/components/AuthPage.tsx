@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -67,14 +68,17 @@ const AuthPage: React.FC = () => {
   };
 
   // "Fake" login/register for UI purposes
+  const navigate = useNavigate();
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setTimeout(() => {
-      setSuccess('Login successful!');
+      localStorage.setItem('isAuthorized', 'true');
       setLoading(false);
-    }, 1000);
+      navigate('/home');
+    }, 500);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -92,9 +96,10 @@ const AuthPage: React.FC = () => {
       return;
     }
     setTimeout(() => {
-      setSuccess('Account created! Check your email.');
+      localStorage.setItem('isAuthorized', 'true');
       setLoading(false);
-    }, 1000);
+      navigate('/home');
+    }, 500);
   };
 
   return (

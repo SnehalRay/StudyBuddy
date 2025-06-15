@@ -153,7 +153,7 @@ const HomePage: React.FC = () => {
         <Button
           variant="outlined"
           startIcon={<LoginIcon />}
-          onClick={() => navigate('/auth')}
+          onClick={() => navigate('/')}
           sx={{
             borderColor: 'hsl(var(--border))',
             color: 'hsl(var(--foreground))',
