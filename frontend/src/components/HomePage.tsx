@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Container, 
   Typography, 
@@ -66,11 +67,8 @@ const characters: Character[] = [
   }
 ];
 
-interface HomePageProps {
-  onNavigateToAuth: () => void;
-}
-
-const HomePage: React.FC<HomePageProps> = ({ onNavigateToAuth }) => {
+const HomePage: React.FC = () => {
+  const navigate = useNavigate();
   const [userFolders] = useState<UserFolder[]>([]);
 
   const TechSphere = () => {
@@ -155,7 +153,7 @@ const HomePage: React.FC<HomePageProps> = ({ onNavigateToAuth }) => {
         <Button
           variant="outlined"
           startIcon={<LoginIcon />}
-          onClick={onNavigateToAuth}
+          onClick={() => navigate('/auth')}
           sx={{
             borderColor: 'hsl(var(--border))',
             color: 'hsl(var(--foreground))',
