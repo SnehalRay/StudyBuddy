@@ -11,12 +11,59 @@ import {
 } from "@mui/material"
 import { Google as GoogleIcon } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
-import { Link } from "react-router-dom";
+import api from "../api/axios";
+import { useState } from "react";
+import { toast } from "react-toastify";
+import useUserStore from '../store/userStore';
+
+type LoginResponse = {
+  message: string;
+  email: string;
+  token: string;
+};
 
 
 const LoginCard = ({ onToggle }: { onToggle: () => void }) => {
 
     const theme = useTheme();
+
+    const setUser = useUserStore((state) => state.setUser);
+
+    //here we will define the states
+    const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+
+    const handleLogin = async () => {
+        try{
+            const response = await api.post<LoginResponse>("/login", {
+                email: emailInput,
+                password: passwordInput,
+            });
+            console.log("Login success:",response.data);
+
+            toast.success("✅ Logged in successfully!", {
+            position: "top-center",
+            autoClose: 3000,
+            });
+
+            const { email, token } = response.data;
+
+            setUser({ email, token });
+            localStorage.setItem("user", JSON.stringify({ email, token }));
+
+            
+
+        } catch (error: any) {
+            const message = error.response?.data?.message || "Login failed. Please try again.";
+            console.error("login failed:", message);
+
+            toast.error(`❌ ${message}`, {
+            position: "top-center",
+            autoClose: 4000,
+            });
+        }
+        };
+
 
     return(
         <Card
@@ -41,6 +88,8 @@ const LoginCard = ({ onToggle }: { onToggle: () => void }) => {
                     label="Email"
                     type="email"
                     variant="outlined"
+                    value={emailInput}
+                    onChange={(e)=>setEmailInput(e.target.value)}
                     />
 
                     <TextField
@@ -48,11 +97,14 @@ const LoginCard = ({ onToggle }: { onToggle: () => void }) => {
                     label="Password"
                     type="password"
                     variant="outlined"
+                    value={passwordInput}
+                    onChange={(e)=>setPasswordInput(e.target.value)}
                     />
 
                     <Button fullWidth
                       variant={'contained'}
                       color={'primary'}
+                      onClick={handleLogin}
                       sx={{
                         py: 1,
                         ...( {
