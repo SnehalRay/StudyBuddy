@@ -31,7 +31,7 @@ const LoginCard = ({ onToggle }: { onToggle: () => void }) => {
 
     //here we will define the states
     const [emailInput, setEmailInput] = useState('');
-  const [passwordInput, setPasswordInput] = useState('');
+    const [passwordInput, setPasswordInput] = useState('');
 
     const handleLogin = async () => {
         try{
@@ -54,13 +54,16 @@ const LoginCard = ({ onToggle }: { onToggle: () => void }) => {
             
 
         } catch (error: any) {
-            const message = error.response?.data?.message || "Login failed. Please try again.";
-            console.error("login failed:", message);
+            const apiError = error.response?.data?.error;
+            const fallback = "Login failed. Please try again.";
+            const message = typeof apiError === 'string' ? apiError : fallback;
+
+            console.error("signup failed:", message);
 
             toast.error(`❌ ${message}`, {
             position: "top-center",
             autoClose: 4000,
-            });
+        });
         }
         };
 
