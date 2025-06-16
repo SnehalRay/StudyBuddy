@@ -1,4 +1,3 @@
-
 // src/theme.ts
 import type { createTheme, ThemeOptions } from "@mui/material/styles";
 import type { PaletteMode } from "@mui/material";
