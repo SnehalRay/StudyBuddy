@@ -95,14 +95,14 @@ public class UserAddingController {
             Optional<User> existingUser = userRepo.findByEmail(user.getEmail()); //getting the user based on their email
 
             if (existingUser.isEmpty()){
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("User does not exist"); //409 conflict
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "User does not exist"));
             }
             User beingAccessedUser = existingUser.get(); //considering we have the matched user, this is the user object
 
 
             if (!passwordEncoder.matches(user.getPassword(), beingAccessedUser.getPassword())){
                 //checking if the password is correct. Password encoder ensures to see the hashed and unhashed
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("Password incorrect"); //409 conflict
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Password incorrect"));
 
             }
 
