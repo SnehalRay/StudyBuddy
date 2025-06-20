@@ -3,7 +3,6 @@ import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import Prices from './pages/Pricing';
-import { ToastContainer } from "react-toastify";
 import { useRecoilValue } from "recoil";
 import useUserStore from "./store/userStore";
 import OAuth2RedirectHandler from "./components/OAuth2RedirectHandler";
