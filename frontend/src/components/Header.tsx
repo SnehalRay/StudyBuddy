@@ -8,6 +8,8 @@ import MenuIcon from '@mui/icons-material/Menu';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { useColorMode } from '../theme/ColorModeContext';
+import Avatar from '@mui/material/Avatar';
+
 
 // Styled Button for navigation
 const LinkButton = styled(Button)(({ theme }) => ({
@@ -18,6 +20,15 @@ const LinkButton = styled(Button)(({ theme }) => ({
     backgroundColor: theme.palette.action.hover,
   },
 }));
+
+const user = JSON.parse(localStorage.getItem('user') || '{}');
+const name = user?.name || '';
+const initials = name
+  .split(' ')
+  .map((n) => n[0])
+  .join('')
+  .toUpperCase();
+
 
 export default function Header() {
   const theme = useTheme();
@@ -59,7 +70,9 @@ export default function Header() {
               Pricing
             </LinkButton>
             <LinkButton href="/account">
-              Account
+              <Avatar alt={name} sx={{ bgcolor: 'primary.main' }}>
+                {initials}
+              </Avatar>
             </LinkButton>
           </Box>
         </Toolbar>
