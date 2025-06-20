@@ -20,6 +20,7 @@ type SignUpResponse = {
   message: string;
   email: string;
   token: string;
+  name: string;
 };
 
 
@@ -62,9 +63,9 @@ const SignupCard = ({ onToggle }: { onToggle: () => void }) => {
             autoClose: 3000,
             });
 
-            const { email, token } = response.data;
-            setUser({ email, token });
-            localStorage.setItem("user", JSON.stringify({ email, token }));
+            const { email, token, name } = response.data;
+            setUser({ email, token, name });
+            localStorage.setItem("user", JSON.stringify({ email, token, name }));
 
 
 
@@ -83,6 +84,11 @@ const SignupCard = ({ onToggle }: { onToggle: () => void }) => {
     
 
     }
+
+    const handleoAuthLogin= () => {
+            //redirect to the springboot website
+            window.location.href = `${api.defaults.baseURL}/oauth2/authorization/google`;
+        }
 
 
     return(
@@ -171,6 +177,7 @@ const SignupCard = ({ onToggle }: { onToggle: () => void }) => {
                         fullWidth
                         startIcon={<GoogleIcon />}
                         color="inherit"
+                        onClick={handleoAuthLogin}
                     >
                         Sign Up with Google
                     </Button>

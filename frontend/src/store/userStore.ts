@@ -4,6 +4,7 @@ import { create } from 'zustand';
 type User = {
   email: string;
   token?: string;
+  name: string;
 };
 
 type UserStore = {

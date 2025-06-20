@@ -8,6 +8,7 @@ import Prices from './pages/Pricing';
 import { ToastContainer } from "react-toastify";
 import { useRecoilValue } from "recoil";
 import useUserStore from "./store/userStore";
+import OAuth2RedirectHandler from "./components/OAuth2RedirectHandler";
 
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={user ? <Prices/> : <Navigate to="/authentication"/>}/>
         <Route path="/authentication" element={!user ? <LoginPage/> : <Navigate to="/"/>}/>
+        <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler/>}/>
       </Routes>
       <ToastContainer/>
     </>
