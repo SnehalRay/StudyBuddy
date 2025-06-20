@@ -1,28 +1,59 @@
-
-import LoginPage from "./pages/LoginPage"
+// src/App.tsx
 import React from 'react';
-import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
 
-import Prices from './pages/Pricing';
-import { ToastContainer } from "react-toastify";
-import { useRecoilValue } from "recoil";
-import useUserStore from "./store/userStore";
+import useUserStore from './store/userStore';
+import Header from './components/Header';
 
+import LoginPage from './pages/LoginPage';
+import Homepage from './pages/Homepage';
+import Pricing from './pages/Pricing';
+// import Account from './pages/Account'; // under development
 
 export default function App() {
   const user = useUserStore((state) => state.user);
-  
+  const { pathname } = useLocation();
+
+  // don’t show header on the authentication screen
+  const showHeader = pathname !== '/authentication';
 
   return (
     <>
-      {/* <LoginPage /> */}
+      {showHeader && <Header />}
+
       <Routes>
-        <Route path="/" element={user ? <Prices/> : <Navigate to="/authentication"/>}/>
-        <Route path="/authentication" element={!user ? <LoginPage/> : <Navigate to="/"/>}/>
+        <Route
+          path="/authentication"
+          element={
+            !user
+              ? <LoginPage />
+              : <Navigate to="/" replace />
+          }
+        />
+
+        <Route
+          path="/"
+          element={
+            user
+              ? <Homepage />
+              : <Navigate to="/authentication" replace />
+          }
+        />
+
+        <Route
+          path="/pricing"
+          element={
+            user
+              ? <Pricing />
+              : <Navigate to="/authentication" replace />
+          }
+        />
+
+        {/* <Route ...account stub for future content... /> */}
       </Routes>
-      <ToastContainer/>
+
+      <ToastContainer />
     </>
- 
   );
 }

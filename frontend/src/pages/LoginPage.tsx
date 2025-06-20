@@ -40,7 +40,7 @@ const LoginPage = () => {
         sx={{ textAlign: "center", maxWidth: 300, color: "text.secondary", mb: -7 }}
 
       >
-        "You study better with your buddies, us."
+        "You study better with your buddies!"
       </Typography>
 
       {/* CARD */}
