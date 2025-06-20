@@ -20,6 +20,7 @@ type LoginResponse = {
   message: string;
   email: string;
   token: string;
+  name: string;
 };
 
 
@@ -46,10 +47,10 @@ const LoginCard = ({ onToggle }: { onToggle: () => void }) => {
             autoClose: 3000,
             });
 
-            const { email, token } = response.data;
+            const { email, token, name } = response.data;
 
-            setUser({ email, token });
-            localStorage.setItem("user", JSON.stringify({ email, token }));
+            setUser({ email, token, name });
+            localStorage.setItem("user", JSON.stringify({ email, token, name }));
 
             
 
@@ -66,6 +67,13 @@ const LoginCard = ({ onToggle }: { onToggle: () => void }) => {
         });
         }
         };
+
+
+        const handleoAuthLogin= () => {
+            //redirect to the springboot website
+            window.location.href = `${api.defaults.baseURL}/oauth2/authorization/google`;
+        }
+
 
 
     return(
@@ -131,6 +139,7 @@ const LoginCard = ({ onToggle }: { onToggle: () => void }) => {
                         variant="outlined"
                         fullWidth
                         startIcon={<GoogleIcon />}
+                        onClick={handleoAuthLogin}
                         color="inherit"
                     >
                         Log in with Google

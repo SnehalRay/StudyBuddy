@@ -66,6 +66,7 @@ public class UserAddingController {
             response.put("message", "Signup successful");
             response.put("token", cookieString);
             response.put("email", user.getEmail());
+            response.put("name",user.getUsername());
 
 
             return ResponseEntity.status(HttpStatus.CREATED).header(HttpHeaders.SET_COOKIE, cookieString).body(response); //success response in json
@@ -118,6 +119,7 @@ public class UserAddingController {
             response.put("message", "Login successful");
             response.put("token", cookieString);
             response.put("email", beingAccessedUser.getEmail());
+            response.put("name", beingAccessedUser.getUsername());
 
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, cookieString)

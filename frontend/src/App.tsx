@@ -2,8 +2,11 @@
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
-
-import useUserStore from './store/userStore';
+import Prices from './pages/Pricing';
+import { ToastContainer } from "react-toastify";
+import { useRecoilValue } from "recoil";
+import useUserStore from "./store/userStore";
+import OAuth2RedirectHandler from "./components/OAuth2RedirectHandler";
 import Header from './components/Header';
 
 import LoginPage from './pages/LoginPage';
@@ -23,6 +26,7 @@ export default function App() {
       {showHeader && <Header />}
 
       <Routes>
+        <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler/>}/>
         <Route
           path="/authentication"
           element={
