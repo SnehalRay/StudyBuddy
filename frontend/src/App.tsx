@@ -7,6 +7,7 @@ import { useRecoilValue } from "recoil";
 import useUserStore from "./store/userStore";
 import OAuth2RedirectHandler from "./components/OAuth2RedirectHandler";
 import Header from './components/Header';
+import WorkbookPage from './pages/Workbook';
 
 import LoginPage from './pages/LoginPage';
 import Homepage from './pages/Homepage';
@@ -26,6 +27,8 @@ export default function App() {
 
       <Routes>
         <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler/>}/>
+        <Route path="/workbook/:folderName" element={<WorkbookPage />} />
+
         <Route
           path="/authentication"
           element={

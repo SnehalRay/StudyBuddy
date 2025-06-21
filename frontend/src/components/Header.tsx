@@ -70,9 +70,9 @@ export default function Header() {
               Pricing
             </LinkButton>
             <LinkButton href="/account">
-              <Avatar alt={name} sx={{ bgcolor: 'primary.main' }}>
-                {initials}
-              </Avatar>
+              <Avatar alt={name}>
+              {initials}
+            </Avatar>
             </LinkButton>
           </Box>
         </Toolbar>
