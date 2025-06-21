@@ -9,6 +9,8 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { useColorMode } from '../theme/ColorModeContext';
 import Avatar from '@mui/material/Avatar';
+import ProfilePopup from './ProfilePopup';
+import { useState } from 'react';
 
 
 // Styled Button for navigation
@@ -30,10 +32,15 @@ const initials = name
   .toUpperCase();
 
 
+
+
 export default function Header() {
   const theme = useTheme();
   const { toggleColorMode } = useColorMode();
   const isDark = theme.palette.mode === 'dark';
+
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
 
   return (
     <>
@@ -69,11 +76,10 @@ export default function Header() {
             <LinkButton href="/pricing">
               Pricing
             </LinkButton>
-            <LinkButton href="/account">
-              <Avatar alt={name}>
-              {initials}
-            </Avatar>
-            </LinkButton>
+            <IconButton onClick={() => setIsProfileOpen(true)}>
+              <Avatar alt={name}>{initials}</Avatar>
+            </IconButton>
+            <ProfilePopup open={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
           </Box>
         </Toolbar>
       </AppBar>
