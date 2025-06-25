@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -156,6 +157,44 @@ public class FolderController {
 
         return ResponseEntity.ok("Folder session exited. Cookie deleted.");
     }
+
+    // This method will return the entire list of folders the user has created to populate the frontend
+
+    @GetMapping("/listFolders")
+    public ResponseEntity<?> getAllFolders(HttpServletRequest request) {
+        // Extract JWT from cookies
+        String token = null;
+        if (request.getCookies() != null) {
+            for (var cookie : request.getCookies()) {
+                // Prevents NPE by replacing cookie.getName().equals("jwt")
+                if ("jwt".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        // Validating the token to authorize the user
+        if (token == null || !jwtUtils.validateToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Invalid or missing JWT");
+        }
+
+        // Identify the user
+        String email = jwtUtils.extractEmail(token);
+        var userOpt = userRepo.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("User not found");
+        }
+
+        // Load the folders by owner
+        List<Folder> folders = folderRepo.findByOwner(userOpt.get());
+
+        // Return as JSON
+        return ResponseEntity.ok(folders);
+    }
+
 
 
 

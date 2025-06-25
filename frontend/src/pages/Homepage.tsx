@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -22,33 +22,18 @@ import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import Grid from '@mui/material/Grid'; // Grid v2 import
 
-// dummy workspace data
-const workspaces = [
-  {
-    id: 1,
-    title: 'Biology Notes',
-    description: 'Cell biology and genetics study materials',
-    docs: 5,
-    last: '2 hours ago',
-    color: '#E6FFED',
-  },
-  {
-    id: 2,
-    title: 'Physics Research',
-    description: 'Quantum mechanics and thermodynamics',
-    docs: 8,
-    last: '1 day ago',
-    color: '#E3F2FD',
-  },
-  {
-    id: 3,
-    title: 'History Essays',
-    description: 'World War II documentation and analysis',
-    docs: 3,
-    last: '3 days ago',
-    color: '#F3E5F5',
-  },
-];
+
+
+
+
+// defining the folder type for usage during fetch
+export interface FolderType {
+  id: number;
+  title: string;
+  description: string;
+  docs: number; // number of files in the folder
+  color?: string;
+}
 
 // styled paper for feature cards
 const FeatureCard = styled(Paper)(({ theme }) => ({
@@ -85,8 +70,23 @@ const WSCard = styled(Paper)<{ headercolor: string }>(({ theme, headercolor }) =
 }));
 
 export default function Homepage() {
+  const [folders, setFolders] = useState<FolderType[]>([]);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+
+  useEffect (() => {
+    async function load() {
+      try{
+        const resp = await fetch('/folder', { credentials: 'include' });
+        if (!resp.ok) throw new Error(resp.statusText);
+        const data = await resp.json() as FolderType[];
+        setFolders(data);
+      } catch (err) {
+        console.error('Could not fetch folders', err);
+      }
+    }
+    load();
+  }, []);
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default }}>
@@ -141,11 +141,15 @@ export default function Homepage() {
           Your Workspaces
         </Typography>
         <Grid container spacing={3}>
-          {workspaces.map(ws => {
+          {folders.map(ws => {
             // adjust header color for dark mode
+            const rawColor = ws.color
+              ? ws.color
+              : (isDark ? '#555555' : '#E3F64D');
+
             const headerColor = isDark
-              ? alpha(ws.color, 0.2)
-              : ws.color;
+              ? alpha(rawColor, 0.2)
+              : rawColor;
             return (
               <Grid key={ws.id} size={{ xs: 12, sm: 6, md: 4 }}>
                 <WSCard headercolor={headerColor}>
@@ -165,7 +169,7 @@ export default function Homepage() {
                       </Box>
                       <Box display="flex" alignItems="center" gap={1}>
                         <AccessTimeIcon fontSize="small" color="action" />
-                        <Typography variant="caption">{ws.last}</Typography>
+                        {/* <Typography variant="caption">{ws.last}</Typography> */}
                       </Box>
                     </Box>
                   </Box>
