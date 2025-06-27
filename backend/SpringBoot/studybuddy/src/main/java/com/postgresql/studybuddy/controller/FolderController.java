@@ -6,6 +6,7 @@ import com.postgresql.studybuddy.entity.User;
 import com.postgresql.studybuddy.repository.FolderRepo;
 import com.postgresql.studybuddy.repository.UserRepo;
 import com.postgresql.studybuddy.security.JwtUtils;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -161,7 +162,7 @@ public class FolderController {
     // This method will return the entire list of folders the user has created to populate the frontend
 
     @GetMapping("/listFolders")
-    public ResponseEntity<?> getAllFolders(HttpServletRequest request) {
+    public ResponseEntity<?>    getAllFolders(HttpServletRequest request) {
         // Extract JWT from cookies
         String token = null;
         if (request.getCookies() != null) {

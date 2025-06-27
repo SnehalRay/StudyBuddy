@@ -12,6 +12,15 @@ import {
   alpha,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+
+//Dialog box imports
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import TextField from '@mui/material/TextField';
+
+
 import MenuIcon from '@mui/icons-material/Menu';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import AddIcon from '@mui/icons-material/Add';
@@ -21,8 +30,8 @@ import HeadsetIcon from '@mui/icons-material/Headset';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import Grid from '@mui/material/Grid'; // Grid v2 import
-
-
+import axios from 'axios';
+import api from '../api/axios';
 
 
 
@@ -47,6 +56,7 @@ const FeatureCard = styled(Paper)(({ theme }) => ({
     boxShadow: theme.shadows[4],
   },
 }));
+
 
 // styled paper for workspaces
 const WSCard = styled(Paper)<{ headercolor: string }>(({ theme, headercolor }) => ({
@@ -73,14 +83,44 @@ export default function Homepage() {
   const [folders, setFolders] = useState<FolderType[]>([]);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+
+
+
+  // For opening the dialog box on click in the create folder button
+  const handleOpen = () => {
+    setIsDialogOpen(true);
+  }
+
+  const handleCreate = async () => {
+    try{
+      const resp = await api.post<string>('/folder/create', {
+        name: newTitle,
+        description: newDescription,
+      });
+
+      setIsDialogOpen(false);
+      setNewTitle('');
+      setNewDescription('');
+
+      // reload the folder list so the new folder appears 
+      const listResp = await api.get<FolderType[]>('/folder/listFolders');
+      setFolders(listResp.data);
+    } catch (e: any) {
+      console.error('Error creating folder',e);
+      alert(e.message || 'Could not create folder');
+    }
+  };
+  
+
 
   useEffect (() => {
     async function load() {
       try{
-        const resp = await fetch('/folder', { credentials: 'include' });
-        if (!resp.ok) throw new Error(resp.statusText);
-        const data = await resp.json() as FolderType[];
-        setFolders(data);
+        const resp = await api.get<FolderType[]>('/folder/listFolders');
+      setFolders(resp.data);
       } catch (err) {
         console.error('Could not fetch folders', err);
       }
@@ -90,6 +130,19 @@ export default function Homepage() {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: theme.palette.background.default }}>
+        <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
+        <DialogTitle>{newTitle}</DialogTitle>
+        <DialogContent>
+          <TextField value={newTitle} label = "Title" onChange={e => setNewTitle(e.target.value)}/>
+          <TextField value={newDescription} label = "Description" onChange={e => setNewDescription(e.target.value)} multiline />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleCreate} disabled={!newTitle || !newDescription}>
+            Create
+          </Button>
+      </DialogActions>
+      </Dialog>
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Welcome text */}
         <Typography variant="h4" gutterBottom>
@@ -191,16 +244,11 @@ export default function Homepage() {
                 flexDirection: 'column',
                 color: 'text.secondary',
                 cursor: 'pointer',
-                '&:hover': { bgcolor: theme.palette.action.hover },
+                
               }}
             >
               <AddIcon fontSize="large" />
-              <Typography variant="subtitle1" mt={1}>
-                Create New Workspace
-              </Typography>
-              <Typography variant="caption">
-                Start organizing your study materials
-              </Typography>
+              <Button variant="text" onClick={handleOpen}> Create New Workspace</Button>
             </Paper>
           </Grid>
         </Grid>
