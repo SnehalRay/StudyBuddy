@@ -3,6 +3,8 @@ import { Grid, Box, Typography } from '@mui/material';
 import { styled, alpha, useTheme } from '@mui/material/styles';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { useNavigate } from 'react-router-dom'; // 👈 add this
+
 
 export interface FolderType {
   id: number;
@@ -39,6 +41,7 @@ interface Props {
 export default function WorkspaceList({ folders }: Props) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const navigate = useNavigate(); //for navigation
 
   return (
     <Grid container spacing={3}>
@@ -51,7 +54,8 @@ export default function WorkspaceList({ folders }: Props) {
           : rawColor;
         return (
           <Grid key={ws.id} size={{ xs: 12, sm: 6, md: 4 }}>
-            <WSCard headercolor={headerColor}>
+            <WSCard headercolor={headerColor}
+            onClick={()=>navigate(`/workbook/${ws.id}`,{state:ws})}>
               <Box className="header">
                 <Typography variant="subtitle1" fontWeight={600}>
                   {ws.name}

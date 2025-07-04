@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Tabs,
@@ -7,17 +7,34 @@ import {
   Container,
   Paper
 } from "@mui/material";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import "@fontsource/orbitron/700.css";
 import { motion } from "framer-motion";
 import UploadSection from "../components/UploadSection";
 import VoiceGenerationSection from "../components/VoiceGenerationSection";
+import type { FolderType } from "../components/WorkspaceList";
 
 const tabs = ["UPLOAD", "AI SUMMARY", "AI CHAT", "VOICE GENERATION"];
 
 const WorkbookPage = () => {
   const [activeTab, setActiveTab] = useState(0);
-  const { folderName } = useParams(); // if using /workbook/:folderName route
+  const { id } = useParams(); // fallback id from URL
+  const location = useLocation();
+  const folder = location.state as FolderType | undefined;
+
+  const [folderName, setFolderName] = useState<string>("");
+
+  useEffect(() => {
+    if (folder?.name) {
+      setFolderName(folder.name);
+    } else if (id) {
+      // fallback fetch by id if location.state is undefined (direct URL access)
+      // TODO: Replace this with actual API call if needed
+      // Example:
+      // fetch(`/api/folder/${id}`).then(res => res.json()).then(data => setFolderName(data.name));
+      setFolderName(`Workspace #${id}`); // Temporary fallback label
+    }
+  }, [folder, id]);
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -26,13 +43,13 @@ const WorkbookPage = () => {
   const renderTabContent = () => {
     switch (activeTab) {
       case 0:
-        return <UploadSection/>;
+        return <UploadSection />;
       case 1:
         return <Box>AI Summary Component/Section here</Box>;
       case 2:
         return <Box>AI Chat Component/Section here</Box>;
       case 3:
-        return <VoiceGenerationSection/>;
+        return <VoiceGenerationSection />;
       default:
         return null;
     }
@@ -48,20 +65,19 @@ const WorkbookPage = () => {
         variant="h3"
         fontWeight="bold"
         sx={{
-            fontFamily: '"Orbitron", sans-serif',
-            mb: 4,
-            textAlign: "center",
-            letterSpacing: 2,
-            textTransform: "uppercase",
-            color: (theme) =>
+          fontFamily: '"Orbitron", sans-serif',
+          mb: 4,
+          textAlign: "center",
+          letterSpacing: 2,
+          textTransform: "uppercase",
+          color: (theme) =>
             theme.palette.mode === "dark" ? "#D1A4FF" : "#6A1B9A",
-            textShadow:
-            "0 0 10px rgba(209, 164, 255, 0.7), 0 0 20px rgba(186, 104, 200, 0.5)",
+          textShadow:
+            "0 0 10px rgba(209, 164, 255, 0.7), 0 0 20px rgba(186, 104, 200, 0.5)"
         }}
-        >
+      >
         {folderName || "Folder Name"}
-        </Typography>
-
+      </Typography>
 
       <Tabs
         value={activeTab}
