@@ -109,7 +109,7 @@ public class UserAddingController {
 
 
             //Generate jwt token
-
+            // This chunk sets the jwt token on the browser so that it is returned for further authentication during create folder, etc.
             String cookieString = jwtUtils.generateToken(user.getEmail());
 
 //            return ResponseEntity.status(HttpStatus.CREATED).body(user.getUsername() + " is logged in"); //success response in json
