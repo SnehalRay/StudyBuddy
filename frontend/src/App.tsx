@@ -12,6 +12,7 @@ import WorkbookPage from './pages/Workbook';
 import LoginPage from './pages/LoginPage';
 import Homepage from './pages/Homepage';
 import Pricing from './pages/Pricing';
+import WorkbookSessionManager from './service/WorkbookSessionManager';
 // import Account from './pages/Account'; // under development
 
 export default function App() {
@@ -23,6 +24,8 @@ export default function App() {
 
   return (
     <>
+      <WorkbookSessionManager/>
+
       {showHeader && <Header />}
 
       <Routes>

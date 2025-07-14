@@ -10,6 +10,9 @@ import {
   Typography,
   Box
 } from '@mui/material';
+import { toast } from "react-toastify";
+import api from '../api/axios';
+
 
 type ProfilePopupProps = {
   open: boolean;
@@ -20,17 +23,71 @@ const ProfilePopup: React.FC<ProfilePopupProps> = ({ open, onClose }) => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [name, setName] = useState(user?.name || '');
 
-  const handleSave = () => {
-    const updatedUser = { ...user, name };
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    onClose();
-    window.location.reload(); // or update UI without reload if using global state
-  };
+  const handleSave = async () => {
+  try {
+    // Call backend to update name
+    const response = await api.put("/edit-profile", { name });
 
-  const handleLogout = () => {
+    // Update localStorage with new name
+    const updatedUser = { ...user, name: response.data.name };
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+
+    // Notify success
+    toast.success("✅ Profile updated successfully", {
+      position: "top-center",
+      autoClose: 3000,
+    });
+
+    // Close the dialog and refresh UI
+    onClose();
+    window.location.reload(); // or use context/global state instead of reload
+
+  } catch (error: any) {
+    const apiError = error.response?.data;
+    const fallback = "Failed to update profile.";
+    const message = typeof apiError === 'string' ? apiError : fallback;
+
+    console.error("Edit profile failed:", message);
+
+    toast.error(`❌ ${message}`, {
+      position: "top-center",
+      autoClose: 4000,
+    });
+  }
+};
+
+
+  const handleLogout = async () => {
+  try {
+    // Call the backend logout API to clear the cookie
+    await api.post("/logout");
+
+    // Remove user info from localStorage
     localStorage.removeItem('user');
+
+    // Redirect to login page
     window.location.href = '/authentication';
-  };
+
+    // Optional: show toast on successful logout
+    toast.success("✅ Logged out successfully.", {
+      position: "top-center",
+      autoClose: 3000,
+    });
+
+  } catch (error: any) {
+    const apiError = error.response?.data?.error;
+    const fallback = "Logout failed. Please try again.";
+    const message = typeof apiError === 'string' ? apiError : fallback;
+
+    console.error("Logout failed:", message);
+
+    toast.error(`❌ ${message}`, {
+      position: "top-center",
+      autoClose: 4000,
+    });
+  }
+};
+
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">

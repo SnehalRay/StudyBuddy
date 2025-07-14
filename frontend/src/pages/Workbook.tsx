@@ -13,6 +13,8 @@ import { motion } from "framer-motion";
 import UploadSection from "../components/UploadSection";
 import VoiceGenerationSection from "../components/VoiceGenerationSection";
 import type { FolderType } from "../components/WorkspaceList";
+import api from "../api/axios"; // adjust path if needed
+
 
 const tabs = ["UPLOAD", "AI SUMMARY", "AI CHAT", "VOICE GENERATION"];
 
@@ -35,6 +37,34 @@ const WorkbookPage = () => {
       setFolderName(`Workspace #${id}`); // Temporary fallback label
     }
   }, [folder, id]);
+
+    const exitFolder = async () => {
+    try {
+      await api.post("/folder/exitFolder");
+      // Optionally log or handle response
+    } catch (error) {
+      // Optionally log or toast
+      console.error("Error exiting folder", error);
+    }
+  };
+
+    useEffect(() => {
+      const handleBeforeUnload = () => {
+        navigator.sendBeacon && navigator.sendBeacon("/folder/exitFolder")
+      }
+      window.addEventListener("beforeunload", handleBeforeUnload);
+
+      return () => {
+        window.removeEventListener("beforeunload",handleBeforeUnload);
+        console.log("unloading function")
+        // exitFolder();
+        
+      }
+  
+    }, []);
+
+
+
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);

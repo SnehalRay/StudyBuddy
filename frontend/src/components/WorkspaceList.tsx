@@ -4,6 +4,9 @@ import { styled, alpha, useTheme } from '@mui/material/styles';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { useNavigate } from 'react-router-dom'; // 👈 add this
+import api from "../api/axios";
+import { toast } from "react-toastify";
+
 
 
 export interface FolderType {
@@ -38,10 +41,39 @@ interface Props {
   folders: FolderType[];
 }
 
+type OpenWorkspaceResponse = {
+  folderId: string;
+}
+
+
+
+
+
 export default function WorkspaceList({ folders }: Props) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate(); //for navigation
+
+  const handleOpenWorkspace = async (ws: FolderType) => {
+    try {
+      // Use ws.id as folderId
+      const response = await api.post<OpenWorkspaceResponse>(`/folder/open?folderId=${ws.id}`);
+      console.log("Successfully opened Workspace");
+      // You can use ws or response.data.folderId here
+      navigate(`/workbook/${ws.id}`, { state: ws });
+    } catch (error: any) {
+      const apiError = error.response?.data?.error;
+      const fallback = "Could not open the workspace";
+      const message = typeof apiError === 'string' ? apiError : fallback;
+
+      console.error("Workspace opening error:", message);
+
+      toast.error(`❌ ${message}`, {
+        position: "top-center",
+        autoClose: 4000,
+      });
+    }
+  };
 
   return (
     <Grid container spacing={3}>
@@ -55,7 +87,7 @@ export default function WorkspaceList({ folders }: Props) {
         return (
           <Grid key={ws.id} size={{ xs: 12, sm: 6, md: 4 }}>
             <WSCard headercolor={headerColor}
-            onClick={()=>navigate(`/workbook/${ws.id}`,{state:ws})}>
+            onClick={() => handleOpenWorkspace(ws)} >
               <Box className="header">
                 <Typography variant="subtitle1" fontWeight={600}>
                   {ws.name}
