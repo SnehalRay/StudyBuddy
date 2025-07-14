@@ -1,11 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Typography,
   Button,
   Stack,
   Paper,
-  useTheme
+  useTheme,
+  Divider,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText
 } from "@mui/material";
+import DescriptionIcon from "@mui/icons-material/Description";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import "@fontsource/orbitron/700.css";
 import api from "../api/axios";
@@ -15,6 +21,21 @@ const UploadSection = () => {
   const theme = useTheme();
   const [uploading,setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<string | null>(null);
+  const [files, setFiles] = useState<any[]>([]);
+
+  // Fetch files list
+  const fetchFiles = async () => {
+    try {
+      const response = await api.get("/file/listFiles");
+      setFiles(response.data);
+    } catch (err) {
+      setFiles([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchFiles();
+  }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.[0]) {
@@ -57,6 +78,7 @@ const UploadSection = () => {
   }
 
   return (
+    <>
     <Paper
       elevation={4}
       sx={{
@@ -132,6 +154,50 @@ const UploadSection = () => {
       )}
     </Stack>
     </Paper>
+     {/* FILES LIST AREA */}
+     
+      <Paper
+        elevation={2}
+        sx={{
+          mt: 4,
+          p: 3,
+          borderRadius: 4,
+          backgroundColor:
+            theme.palette.mode === "dark" ? "#26232a" : "#f7e9fa",
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{
+            fontFamily: '"Orbitron", sans-serif',
+            color: theme.palette.mode === "dark" ? "#FFEB3B" : "#7B1FA2",
+            mb: 2,
+          }}
+        >
+          Uploaded Files
+        </Typography>
+        <Divider sx={{ mb: 2 }} />
+
+        {files.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            No files uploaded yet.
+          </Typography>
+        ) : (
+          <List>
+            {files.map((file) => (
+              <ListItem key={file.id}>
+                <ListItemIcon>
+                  <DescriptionIcon color="secondary" />
+                </ListItemIcon>
+                <ListItemText
+                  primary={file.name}
+                />
+              </ListItem>
+            ))}
+          </List>
+        )}
+      </Paper>
+      </>
   );
 };
 
