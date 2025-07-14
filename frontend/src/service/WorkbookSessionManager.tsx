@@ -2,6 +2,9 @@ import { useEffect, useRef } from "react";
 import { useLocation, matchPath } from "react-router-dom";
 import api from "../api/axios";
 
+// THE POINT OF THIS FILE IS TO HANDLE THE EXITING OF THE FOLDER ACROSS THE WHOLE APP AS IT DEALS WITH COOKIES AND EVERYTHING
+
+
 const exitFolder = async () => {
   try {
     await api.post("/folder/exitFolder");
@@ -41,7 +44,6 @@ export default function WorkbookSessionManager() {
       navigator.sendBeacon && navigator.sendBeacon("/folder/exitFolder");
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
-    console.log("heklo")
     exitFolder();
     
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
