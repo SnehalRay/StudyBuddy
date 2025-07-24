@@ -11,7 +11,9 @@ from moviepy.editor import VideoFileClip, AudioFileClip
 from openai import OpenAI
 from elevenlabs import ElevenLabs
 
-from fastapi import FastAPI, UploadFile, Form, HTTPException
+
+from fastapi import FastAPI, UploadFile, Form, HTTPException, Header
+
 from dotenv import load_dotenv
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -20,7 +22,7 @@ from pydantic import BaseModel
 # ────────────────────────────── OpenAI Configuration ───────────────────────────────
 load_dotenv()
 client = OpenAI(api_key = os.getenv("OPENAI_API_KEY"))
-INSTR = "You are an assistant that takes in documents and a prompt about a topic from the document and summarizes them into Peter Griffin - Stewie styled conversations. When the user asks to summarize a document, you will just return a conversation between Peter and Stewie about that topic as if either Peter is learning while Stewie explains or Stewie is learning while Peter explains. Only return text back, no numbers or symbols. Be extremely detailed and try making it a 2 minute long conversation"
+INSTR = "You are an assistant that takes in documents and a prompt about a topic from the document and summarizes them into Peter Griffin style explanation. Incorporate brainrot terms and lingo. Return the transcript of the explanation only. Don't add anything but the transcript."
 MODEL = "gpt-4o"       
 FILE_TOOL = {"type":"file_search"}        
 
