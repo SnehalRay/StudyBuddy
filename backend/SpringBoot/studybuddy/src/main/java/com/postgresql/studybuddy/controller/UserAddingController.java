@@ -14,14 +14,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Base64;
 
 @RestController
 
@@ -134,32 +132,31 @@ public class UserAddingController {
 
     @GetMapping("/verifyToken")
     public ResponseEntity<String> verifyToken(HttpServletRequest request) {
-        // Get all cookies
         Cookie[] cookies = request.getCookies();
-
         if (cookies != null) {
             for (Cookie cookie : cookies) {
                 if ("jwt".equals(cookie.getName())) {
-                    String token = cookie.getValue();
-
+                    String token;
+                    try {
+                        token = new String(Base64.getUrlDecoder().decode(cookie.getValue()));
+                    } catch (IllegalArgumentException e) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Malformed token");
+                    }
                     if (jwtUtils.validateToken(token)) {
                         String email = jwtUtils.extractEmail(token);
                         Optional<User> user = userRepo.findByEmail(email);
-
                         if (user.isPresent()) {
                             String username = user.get().getUsername();
                             return ResponseEntity.ok("Token is valid. Logged in as: " + username);
                         } else {
                             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
                         }
-
                     } else {
                         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
                     }
                 }
             }
         }
-
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("JWT cookie not found");
     }
 
@@ -177,6 +174,55 @@ public class UserAddingController {
 
         return ResponseEntity.ok("User is logged out.");
     }
+
+
+    @PutMapping("/edit-profile")
+    public ResponseEntity<?> editProfile(HttpServletRequest request, @RequestBody Map<String, String> payload) {
+        // 1. Extract JWT cookie
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No cookies found");
+        }
+
+        String jwt = null;
+        for (Cookie cookie : cookies) {
+            if ("jwt".equals(cookie.getName())) {
+                jwt = cookie.getValue();
+                break;
+            }
+        }
+
+        if (jwt == null || !jwtUtils.validateToken(jwt)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid or missing token");
+        }
+
+        // 2. Get email from JWT
+        String email = jwtUtils.extractEmail(jwt);
+
+        // 3. Fetch user by email
+        Optional<User> optionalUser = userRepo.findByEmail(email);
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        User user = optionalUser.get();
+
+        // 4. Update only username
+        String newName = payload.get("name");
+        if (newName == null || newName.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Name cannot be empty");
+        }
+
+        user.setUsername(newName);
+        userRepo.save(user);
+
+        // 5. Return success response
+        return ResponseEntity.ok(Map.of(
+                "message", "Profile updated successfully",
+                "name", user.getUsername()
+        ));
+    }
+
 
 
 

@@ -74,18 +74,20 @@ public class SecurityConfig {
 
                 .cors().and().csrf().disable()
                 .authorizeHttpRequests()
-                .requestMatchers("/signup", "/login","/logout","/verifyToken","/folder/create","/folder/open","/folder/exitFolder","/upload/files","/file/upload", "/folder/listFolders").permitAll()
+                .requestMatchers("/signup", "/login","/logout","/verifyToken","/folder/create","/folder/open","/folder/exitFolder","/upload/files","/file/upload", "/folder/listFolders","/edit-profile","/file/listFiles").permitAll()
                 .anyRequest().authenticated()
                 .and()
+                .logout().disable()
                 .oauth2Login()
                 .userInfoEndpoint()
                 .userService(customOAuth2UserService) // use your custom service
                 .and()
                 .successHandler(successHandler);
 
+
         // ✅ Apply JWT filter outside of the oauth2Login() chain
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
 
         return http.build();
-    }
+    }}
