@@ -5,10 +5,15 @@ from urllib.parse import unquote_plus
 from starlette.datastructures import Headers
 import boto3
 from io import BytesIO
+import subprocess
+from moviepy.editor import VideoFileClip, AudioFileClip
 
 from openai import OpenAI
+from elevenlabs import ElevenLabs
+
 from fastapi import FastAPI, UploadFile, Form, HTTPException
 from dotenv import load_dotenv
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 
@@ -24,6 +29,12 @@ S3_BUCKET = os.getenv("S3_BUCKET_NAME")
 AWS_REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1") # Defaults to us-east-1
 
 s3 = boto3.client("s3", region_name = AWS_REGION)
+
+# ────────────────────────────── ElevenLabs Configuration ───────────────────────────────
+eleven = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
+VOICE_ID = "0OU8GtAGLNJOOEVYe36E"
+TTS_MODEL = "eleven_multilingual_v2"
+
 # ────────────────────────────── Helper Functions ───────────────────────────────
 
 def upload_file(upload: UploadFile) -> str:
@@ -121,24 +132,74 @@ class Response(BaseModel):
     reply: str
 
 
-@app.post("/summarize/", response_model=Response)
-async def summarize_fast(
-    file: UploadFile, 
-    prompt: str = Form(...)
+@app.post("/summarize-into-video/")
+async def summarize_into_video(
+    prompt: str = Form(...),
+    cookie_header: str = Header(..., alias="cookie")
 ):
-    # 1. upload file
-    file_id = upload_file(file)
-    # 2. create assistant with attached file
-    assistant_id = create_assistant()
-    # 3. ask question
-    thread_id, reply = ask_assistant(assistant_id=assistant_id, prompt=prompt, file_id=file_id)
+    """
+    1. Summarize + TTS → audio_bytes
+    2. Whisper → subtitles.srt
+    3. SRT → ASS
+    4. Load bg1.mp4, replace audio, burn in subtitles → final.mp4
+    5. Stream final.mp4 back
+    """
+    try:
+        # your summarize helper now returns audio bytes too
+        asst_id, thread_id, script, audio_bytes = summarize(cookie_header, prompt)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-    return Response(
-        assistant_id=assistant_id,
-        thread_id=thread_id,
-        reply=reply
+    # 1) Save audio to disk
+    audio_path = "temp_audio.mp3"
+    with open(audio_path, "wb") as f:
+        f.write(audio_bytes)
+
+    # 2) Whisper transcription → SRT
+    whisper_resp = client.audio.transcriptions.create(
+        file=("audio.mp3", open(audio_path, "rb"), "audio/mpeg"),
+        model="whisper-1",
+        response_format="srt"
+    )
+    srt_path = "subtitles.srt"
+    with open(srt_path, "w") as f:
+        f.write(whisper_resp.text)
+
+    # 3) Convert to ASS
+    ass_path = "subtitles.ass"
+    srt_to_ass(srt_path, ass_path)
+
+    # 4) Prepare video + burn subtitles
+    bg_video = "bg1.mp4"
+    temp_video = "with_audio.mp4"
+    final_video = "final.mp4"
+
+    # replace bg audio
+    clip = VideoFileClip(bg_video)
+    audio_clip = AudioFileClip(audio_path)
+    duration = audio_clip.duration + 1  # optional padding
+    clip = clip.subclip(0, duration).set_audio(audio_clip)
+    clip.write_videofile(
+        temp_video,
+        codec="libx264",
+        audio_codec="aac",
+        fps=30,
+        threads=4,
+        preset="ultrafast"
     )
 
+    # burn subtitles
+    burn_subtitles_top(temp_video, ass_path, final_video, marginV=20)
+
+    # 5) Stream back with headers
+    headers = {
+        "X-Assistant-ID": asst_id,
+        "X-Thread-ID": thread_id,
+        "Content-Disposition": 'attachment; filename="summary_video.mp4"'
+    }
+    return FileResponse(final_video, media_type="video/mp4", headers=headers)
 # ────────────────────────────── Non-API configuration ───────────────────────────────
 
 
@@ -174,40 +235,56 @@ def make_uploadfile(data: bytes, filename: str, content_type: str) -> UploadFile
     stream = BytesIO(data)
     return UploadFile(file=stream, filename=filename, headers=hdrs)
 
-def summarize(cookie_header: str, prompt: str, cookie_name: str="folderSession") -> Tuple[str, str, str]:
-    """
-    1. Parse and URL decode cookie
-    2. List Objects under that prefix in S3 -> Pick the filekey
-    3. Download the raw bytes
-    4. Convert the bytes to FastAPI UploadFile
-    5. Upload to OpenAI, create assistant ask question
-    """
-    folder_prefix = get_fileid(cookie_header, cookie_name)
+def generate_tts(script: str) -> bytes:
+    buf = BytesIO()
+    for chunk in eleven.text_to_speech.convert(
+        text=script,
+        voice_id=VOICE_ID,
+        model_id=TTS_MODEL,
+        output_format="mp3_44100_128"
+    ):
+        buf.write(chunk)
+    return buf.getvalue()
 
-    resp = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix=folder_prefix + "/")
-    contents = resp.get("Contents", [])
-    if not contents:
-        raise HTTPException(404, f"No files found under {folder_prefix}/")
-    
-    # Get the file_key
-    file_key = contents[0]["Key"]
+def summarize(cookie_header: str, prompt: str) -> Tuple[str,str,str,bytes]:
+    # 1. extract folderSession
+    folder = get_fileid(cookie_header)
+    # 2. list & download first object
+    resp = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix=f"{folder}/")
+    items = resp.get("Contents") or []
+    if not items:
+        raise HTTPException(404, f"No files under {folder}/")
+    key = items[0]["Key"]
+    raw = download_s3_object(key)
 
-    # Download raw bytes
-    raw = download_s3_object(file_key)
-
-    # Wrap in upload file
-    ext = os.path.splitext(file_key)[1] or ""
-    fname = os.path.basename(file_key).split("|")[0].strip(" ") # Removes spaces, takes the filename only and excludes the email
+    # 3. wrap & upload to OpenAI
+    fname = os.path.basename(key).split("|")[0].strip()
     upload_blob = make_uploadfile(raw, fname, "application/pdf")
- 
-
     file_id = upload_file(upload_blob)
 
-    assistant_id = create_assistant()
-    thread_id, reply = ask_assistant(assistant_id, prompt, file_id)
+    # 4. create assistant + ask
+    asst_id = create_assistant()
+    thread_id, script = ask_assistant(asst_id, prompt, file_id)
 
-    return assistant_id, thread_id, reply
+    # 5. generate MP3
+    audio_bytes = generate_tts(script)
+
+    return asst_id, thread_id, script, audio_bytes
 
 
+# ────────────────────────────── Video Helpers ───────────────────────────────
 
 
+def srt_to_ass(srt_path: str, ass_path: str):
+    subprocess.run(
+        ["ffmpeg", "-y", "-i", srt_path, ass_path],
+        check=True
+    )
+
+def burn_subtitles_top(input_video: str, ass_file: str, output_video: str, marginV: int = 20):
+    # Alignment=6 → top‐center
+    vf = f"subtitles={ass_file}:force_style='Alignment=6,MarginV={marginV}'"
+    subprocess.run(
+        ["ffmpeg", "-y", "-i", input_video, "-vf", vf, "-c:a", "copy", output_video],
+        check=True
+    )
