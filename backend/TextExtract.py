@@ -12,7 +12,7 @@ from openai import OpenAI
 from elevenlabs import ElevenLabs
 
 
-from fastapi import FastAPI, UploadFile, Form, HTTPException, Header
+from fastapi import FastAPI, UploadFile, Form, HTTPException, Request
 
 from dotenv import load_dotenv
 from fastapi.responses import FileResponse
@@ -137,7 +137,7 @@ class Response(BaseModel):
 @app.post("/summarize-into-video/")
 async def summarize_into_video(
     prompt: str = Form(...),
-    cookie_header: str = Header(..., alias="cookie")
+    cookie_header: str = Request
 ):
     """
     1. Summarize + TTS → audio_bytes
@@ -146,28 +146,35 @@ async def summarize_into_video(
     4. Load bg1.mp4, replace audio, burn in subtitles → final.mp4
     5. Stream final.mp4 back
     """
-    try:
-        # your summarize helper now returns audio bytes too
-        asst_id, thread_id, script, audio_bytes = summarize(cookie_header, prompt)
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    # Commenting this because it can extensively burn through ElevenLabs Token
+    asst_id = "1"
+    thread_id = "1"
+    # try:
+    #     # your summarize helper now returns audio bytes too
+    #     asst_id, thread_id, script, audio_bytes = summarize(cookie_header, prompt)
+    # except HTTPException as e:
+    #     raise e
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail=str(e))
 
     # 1) Save audio to disk
     audio_path = "temp_audio.mp3"
-    with open(audio_path, "wb") as f:
-        f.write(audio_bytes)
+    # with open(audio_path, "wb") as f:
+    #     f.write(audio_bytes)
 
     # 2) Whisper transcription → SRT
-    whisper_resp = client.audio.transcriptions.create(
-        file=("audio.mp3", open(audio_path, "rb"), "audio/mpeg"),
-        model="whisper-1",
-        response_format="srt"
-    )
+    try:
+        whisper_resp = client.audio.transcriptions.create(
+            file=("audio.mp3", open(audio_path, "rb"), "audio/mpeg"),
+            model="whisper-1",
+            response_format="srt"
+        )
+    except Exception as e:
+        print("Failed to use whisper to create captions with error: ", e)
+    
     srt_path = "subtitles.srt"
     with open(srt_path, "w") as f:
-        f.write(whisper_resp.text)
+        f.write(whisper_resp)
 
     # 3) Convert to ASS
     ass_path = "subtitles.ass"
@@ -253,7 +260,7 @@ def summarize(cookie_header: str, prompt: str) -> Tuple[str,str,str,bytes]:
     folder = get_fileid(cookie_header)
     # 2. list & download first object
     resp = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix=f"{folder}/")
-    items = resp.get("Contents") or []
+    items = resp.get("Contents", [])
     if not items:
         raise HTTPException(404, f"No files under {folder}/")
     key = items[0]["Key"]
@@ -261,6 +268,8 @@ def summarize(cookie_header: str, prompt: str) -> Tuple[str,str,str,bytes]:
 
     # 3. wrap & upload to OpenAI
     fname = os.path.basename(key).split("|")[0].strip()
+    fname = fname.split("-")[0]
+    print(fname)
     upload_blob = make_uploadfile(raw, fname, "application/pdf")
     file_id = upload_file(upload_blob)
 
