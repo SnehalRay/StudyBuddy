@@ -124,6 +124,78 @@ def ask_assistant(
     
     raise RuntimeError("Assistant responded with no assistant message")
 
+
+# ────────────────────────────── Methods ───────────────────────────────
+
+def get_fileid(cookie_header: str, cookie_name: str = "folderSession") -> str:
+    """
+    Parse a cookie header and return the URL-decoded value of folderSession
+    """
+    
+    # Decode cookie
+    # 1. Split the cookie first
+    for part in cookie_header.split(";"):
+        name, _, val = part.strip().partition("=")
+        if name == cookie_name and val:
+            # Returns the decoded value
+            decoded = unquote_plus(val)
+            return decoded
+    raise HTTPException(status_code=400, detail=f"Cookie '{cookie_name}' not found in header")
+
+def download_s3_object(key: str) -> bytes:
+    """
+    Fetch the object at the corresponding key from the configured bucket
+    Returns its raw bytes
+    """
+    resp = s3.get_object(Bucket=S3_BUCKET, Key=key)
+    return resp["Body"].read()
+
+def make_uploadfile(data: bytes, filename: str, content_type: str) -> UploadFile:
+    """
+    Turns raw bytes into an UploadFile so TextExtract can send the file to OAI
+    """
+    hdrs = Headers({"content-type": content_type})
+    stream = BytesIO(data)
+    return UploadFile(file=stream, filename=filename, headers=hdrs)
+
+def generate_tts(script: str) -> bytes:
+    buf = BytesIO()
+    for chunk in eleven.text_to_speech.convert(
+        text=script,
+        voice_id=VOICE_ID,
+        model_id=TTS_MODEL,
+        output_format="mp3_44100_128"
+    ):
+        buf.write(chunk)
+    return buf.getvalue()
+
+def summarize(cookie_header: str, prompt: str) -> Tuple[str,str,str,bytes]:
+    # 1. extract folderSession
+    folder = get_fileid(cookie_header)
+    # 2. list & download first object
+    resp = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix=f"{folder}/")
+    items = resp.get("Contents", [])
+    if not items:
+        raise HTTPException(404, f"No files under {folder}/")
+    key = items[0]["Key"]
+    raw = download_s3_object(key)
+
+    # 3. wrap & upload to OpenAI
+    fname = os.path.basename(key).split("|")[0].strip()
+    fname = fname.split("-")[0]
+    print(fname)
+    upload_blob = make_uploadfile(raw, fname, "application/pdf")
+    file_id = upload_file(upload_blob)
+
+    # 4. create assistant + ask
+    asst_id = create_assistant()
+    thread_id, script = ask_assistant(asst_id, prompt, file_id)
+
+    # 5. generate MP3
+    audio_bytes = generate_tts(script)
+
+    return asst_id, thread_id, script, audio_bytes
+
 # ────────────────────────────── FastAPI endpoint configuration ───────────────────────────────
 
 app = FastAPI(title="TextExtract")
@@ -133,7 +205,7 @@ class Response(BaseModel):
     thread_id: str
     reply: str
 
-
+# Cookie Header is set to String and not Cookie as we are manually parsing our cookie via helper functions.
 @app.post("/summarize-into-video/")
 async def summarize_into_video(
     prompt: str = Form(...),
@@ -209,78 +281,6 @@ async def summarize_into_video(
         "Content-Disposition": 'attachment; filename="summary_video.mp4"'
     }
     return FileResponse(final_video, media_type="video/mp4", headers=headers)
-# ────────────────────────────── Non-API configuration ───────────────────────────────
-
-
-
-def get_fileid(cookie_header: str, cookie_name: str = "folderSession") -> str:
-    """
-    Parse a cookie header and return the URL-decoded value of folderSession
-    """
-    
-    # Decode cookie
-    # 1. Split the cookie first
-    for part in cookie_header.split(";"):
-        name, _, val = part.strip().partition("=")
-        if name == cookie_name and val:
-            # Returns the decoded value
-            decoded = unquote_plus(val)
-            return decoded
-    raise HTTPException(status_code=400, detail=f"Cookie '{cookie_name}' not found in header")
-
-def download_s3_object(key: str) -> bytes:
-    """
-    Fetch the object at the corresponding key from the configured bucket
-    Returns its raw bytes
-    """
-    resp = s3.get_object(Bucket=S3_BUCKET, Key=key)
-    return resp["Body"].read()
-
-def make_uploadfile(data: bytes, filename: str, content_type: str) -> UploadFile:
-    """
-    Turns raw bytes into an UploadFile so TextExtract can send the file to OAI
-    """
-    hdrs = Headers({"content-type": content_type})
-    stream = BytesIO(data)
-    return UploadFile(file=stream, filename=filename, headers=hdrs)
-
-def generate_tts(script: str) -> bytes:
-    buf = BytesIO()
-    for chunk in eleven.text_to_speech.convert(
-        text=script,
-        voice_id=VOICE_ID,
-        model_id=TTS_MODEL,
-        output_format="mp3_44100_128"
-    ):
-        buf.write(chunk)
-    return buf.getvalue()
-
-def summarize(cookie_header: str, prompt: str) -> Tuple[str,str,str,bytes]:
-    # 1. extract folderSession
-    folder = get_fileid(cookie_header)
-    # 2. list & download first object
-    resp = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix=f"{folder}/")
-    items = resp.get("Contents", [])
-    if not items:
-        raise HTTPException(404, f"No files under {folder}/")
-    key = items[0]["Key"]
-    raw = download_s3_object(key)
-
-    # 3. wrap & upload to OpenAI
-    fname = os.path.basename(key).split("|")[0].strip()
-    fname = fname.split("-")[0]
-    print(fname)
-    upload_blob = make_uploadfile(raw, fname, "application/pdf")
-    file_id = upload_file(upload_blob)
-
-    # 4. create assistant + ask
-    asst_id = create_assistant()
-    thread_id, script = ask_assistant(asst_id, prompt, file_id)
-
-    # 5. generate MP3
-    audio_bytes = generate_tts(script)
-
-    return asst_id, thread_id, script, audio_bytes
 
 
 # ────────────────────────────── Video Helpers ───────────────────────────────
