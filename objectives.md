@@ -18,9 +18,9 @@ VIDEO GENERATION: => snehal: 3hrs; akhil : 1hr
 3. change ui of the vid gen => akhil
 
 
-=> OPEN AI SUMMARY OF THE DOC (need approval) => Akhil => 3-4hrs
+=> OPEN AI SUMMARY OF THE DOC (need approval) => Akhil => 3-4hrs ✅
 
-=> postgres hosted on aws => Snehal => 5hrs
+=> postgres hosted on aws => Snehal => 5hrs ✅
 
 => image character pic => s3 integration => Snehal => 2hrs => elevenlabid is the key/folder name
 
