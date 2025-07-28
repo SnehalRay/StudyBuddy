@@ -47,6 +47,13 @@ ROSTER:
 5. Modi
 6. Sydney Sweeney
 
+========================
+VIDEO TEMPLATE:
+
+1. SUBWAY SURFER
+2. GTA RACES 2X
+3. MINECRAFT 3X
+
 
 
 OVERALL ESTIMATE:
