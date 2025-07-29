@@ -23,7 +23,9 @@ from pydantic import BaseModel
 # ────────────────────────────── OpenAI Configuration ───────────────────────────────
 load_dotenv()
 client = OpenAI(api_key = os.getenv("OPENAI_API_KEY"))
-INSTR = "You are an assistant that takes in documents and a prompt about a topic from the document and summarizes them into a condensed explanation. Return the summarization only unless further instructions are given in the prompt"
+INSTR = "You are an assistant that takes in documents and a prompt about a topic from the document and summarizes them into a condensed explanation. " \
+"Return the summarization only unless further instructions are given in the prompt." \
+"Do not return any citations or any non text symbols."
 MODEL = "gpt-4o"       
 FILE_TOOL = {"type":"file_search"}        
 
@@ -222,7 +224,7 @@ class Response(BaseModel):
     reply: str
 
 @app.post("/summarize-text")
-async def summarize_text(prompt: str = Form(...), cookie_header: str = Request):
+async def summarize_text(prompt: str = "Summarize", cookie_header: str = Request):
     """
     The summarize feature without using any brainrot. Used only for text summarize
     """
@@ -234,8 +236,8 @@ async def summarize_text(prompt: str = Form(...), cookie_header: str = Request):
 @app.post("/summarize-into-video/")
 async def summarize_into_video(
     background_tasks: BackgroundTasks,
-    prompt: str = Form(...),
-    cookie_header: str = Header(..., alias="X-Cookie-Header"),
+    prompt: str = "Summarize",
+    cookie_header: str = Request,
 ):
     """
     1. Summarize + TTS → audio_bytes
@@ -245,27 +247,35 @@ async def summarize_into_video(
     5. Stream final.mp4 back, then clean up all temps
     """
     # 0) get script & audio
-    # asst_id, thread_id, script, audio_bytes = summarize(...)
+    try:
+        asst_id, thread_id, script, audio_bytes = summarize(cookie_header, prompt, video=True)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
 
-    # (for demo)
-    asst_id = "1"
-    thread_id = "1"
-    audio_bytes = b"..."  # your TTS blob
+    # # (for demo)
+    # asst_id = "1"
+    # thread_id = "1"
+    # audio_bytes = b"..."  # TTS blob
 
     # 1) write audio to a temp file
     audio_tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
     audio_tmp.write(audio_bytes)
     audio_tmp.flush()
     audio_tmp.close()
+    audio_path = audio_tmp.name
 
     # 2) whisper → srt
     srt_tmp = tempfile.NamedTemporaryFile(suffix=".srt", delete=False, mode="w", encoding="utf-8")
     try:
-        whisper_resp = client.audio.transcriptions.create(
-            file=("audio.mp3", open(audio_tmp.name, "rb"), "audio/mpeg"),
-            model="whisper-1",
-            response_format="srt"
-        )
+        with open(audio_path, "rb") as audio_file:
+            whisper_resp = client.audio.transcriptions.create(
+                file=audio_file,
+                model="whisper-1",
+                response_format="srt"
+            )
     except Exception as e:
         _cleanup(audio_tmp.name)
         raise HTTPException(status_code=500, detail=f"Whisper failed: {e}")
