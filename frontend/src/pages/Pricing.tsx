@@ -25,30 +25,30 @@ type Plan = {
 // Data for our plans
 const plans: Plan[] = [
   {
-    name: 'Individual',
+    name: 'Personal',
     price: 0,
     period: '/month',
-    description: 'Best option for personal use',
+    description: 'Best option for limited use',
     features: [
-      'Up to 5 video generations/week',
-      '1,000,000 tokens for summarization /month',
-      'Free new voice packs',
+      '1 video generation and summary per day',
+      'Gain access to all community character voices',
       'Up to 2 GB file storage',
+      'Access to standard features'
     ],
-    buttonText: 'Join the waitlist',
+    buttonText: 'Coming Soon!',
   },
   {
-    name: 'Pro',
+    name: 'Aura Farmer',
     price: 20,
     period: '/month',
-    description: 'Best option for unlimited usage!',
+    description: 'For unlimited usage!',
     features: [
-      'Unlimited video generations',
-      'Unlimited summarization usage',
-      'Request new voice packs',
+      'Unlimited video generations & summaries',
+      'Create your own custom character voices',
       'Up to 50 GB file storage',
+      'Early access to new features'
     ],
-    buttonText: 'Join the waitlist',
+    buttonText: 'Coming Soon!',
     featured: true,
   },
 ];

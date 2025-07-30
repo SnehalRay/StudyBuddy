@@ -2,64 +2,54 @@
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
-import Prices from './pages/Pricing';
-import { useRecoilValue } from "recoil";
-import useUserStore from "./store/userStore";
-import OAuth2RedirectHandler from "./components/OAuth2RedirectHandler";
+import useUserStore from './store/userStore';
+
+import OAuth2RedirectHandler from './components/OAuth2RedirectHandler';
 import Header from './components/Header';
 import WorkbookPage from './pages/Workbook';
-
 import LoginPage from './pages/LoginPage';
+import LandingPage from './pages/LandingPage';
 import Homepage from './pages/Homepage';
-import Pricing from './pages/Pricing';
+import Pricing from './pages/Pricing';    // make sure this path matches your filename
 import WorkbookSessionManager from './service/WorkbookSessionManager';
-// import Account from './pages/Account'; // under development
 
 export default function App() {
   const user = useUserStore((state) => state.user);
   const { pathname } = useLocation();
 
-  // don’t show header on the authentication screen
-  const showHeader = pathname !== '/authentication';
+  // hide Header on Landing, Authentication, and Pricing pages
+  const hideHeaderOn = ['/', '/authentication', '/pricing'];
+  const showHeader = !hideHeaderOn.includes(pathname);
 
   return (
     <>
-      <WorkbookSessionManager/>
-
+      <WorkbookSessionManager />
       {showHeader && <Header />}
 
       <Routes>
-        <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler/>}/>
+        <Route
+          path="/"
+          element={user ? <Navigate to="/app" replace /> : <LandingPage />}
+        />
+
+        <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
+
         <Route path="/workbook/:folderName" element={<WorkbookPage />} />
 
         <Route
           path="/authentication"
-          element={
-            !user
-              ? <LoginPage />
-              : <Navigate to="/" replace />
-          }
+          element={!user ? <LoginPage /> : <Navigate to="/app" replace />}
         />
 
         <Route
-          path="/"
-          element={
-            user
-              ? <Homepage />
-              : <Navigate to="/authentication" replace />
-          }
+          path="/app"
+          element={user ? <Homepage /> : <Navigate to="/authentication" replace />}
         />
 
-        <Route
-          path="/pricing"
-          element={
-            user
-              ? <Pricing />
-              : <Navigate to="/authentication" replace />
-          }
-        />
+        {/* Pricing is public but header is hidden */}
+        <Route path="/pricing" element={<Pricing />} />
 
-        {/* <Route ...account stub for future content... /> */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
       <ToastContainer />
