@@ -5,6 +5,7 @@ from typing import Optional, Tuple
 from urllib.parse import unquote_plus
 from starlette.datastructures import Headers
 import boto3
+import uuid
 from io import BytesIO
 import subprocess
 from moviepy.editor import VideoFileClip, AudioFileClip
@@ -180,7 +181,7 @@ def generate_tts(script: str) -> bytes:
 def summarize(cookie_header: str, prompt: str = "Summarize", video: bool = False):
     # First we need to insert the character details into the prompt if its video mode
     if video:
-        prompt = prompt + "Create a transcript of the summary in a verbal explanation style by (Replace with character name). "
+        prompt = prompt + "Create a transcript of you explaining the topic as if you are (Replace with character name). "
         "Litter brainrot terms to the transcript to make it more appealing to GenZ" \
         " Incorporate the character's speaking style as well as slangs/mannerisms and try to explain with analogies common to the character." \
         "Return only the transcript of the explanation with no character names in it or symbols"
@@ -254,11 +255,12 @@ async def summarize_into_video(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-
-    # # (for demo)
+    # Demo for not consuming ElevenLabs API tokens
+    # audio_path = "temp_audio.mp3"
+    # with open(audio_path, "wb") as f:
+    #     f.write(audio_bytes)
     # asst_id = "1"
     # thread_id = "1"
-    # audio_bytes = b"..."  # TTS blob
 
     # 1) write audio to a temp file
     audio_tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
@@ -267,7 +269,7 @@ async def summarize_into_video(
     audio_tmp.close()
     audio_path = audio_tmp.name
 
-    # 2) whisper → srt
+    # 2) whisper → srt subtitles from the audio file
     srt_tmp = tempfile.NamedTemporaryFile(suffix=".srt", delete=False, mode="w", encoding="utf-8")
     try:
         with open(audio_path, "rb") as audio_file:
@@ -283,16 +285,18 @@ async def summarize_into_video(
     srt_tmp.flush()
     srt_tmp.close()
 
-    # 3) convert to ASS
-    ass_tmp = tempfile.NamedTemporaryFile(suffix=".ass", delete=False)
-    ass_tmp.close()
-    srt_to_ass(srt_tmp.name, ass_tmp.name)
+    # 3) convert SRT → ASS, but write to a “normal” file instead of NamedTemporaryFile
+    # UUID thing makes it random
+    ass_filename = f"subs_{uuid.uuid4().hex}.ass"
+    ass_path = ass_filename
+    # srt_tmp.name is your .srt; write out the .ass here:
+    srt_to_ass(srt_tmp.name, ass_path)
 
-    # 4a) attach audio to background video
+    # 4a) attach audio to background
     temp_video = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
     temp_video.close()
     clip = VideoFileClip("bg1.mp4")
-    audio_clip = AudioFileClip(audio_tmp.name)
+    audio_clip = AudioFileClip(audio_path)
     duration = audio_clip.duration + 1
     clip = clip.subclip(0, duration).set_audio(audio_clip)
     clip.write_videofile(
@@ -304,26 +308,34 @@ async def summarize_into_video(
         preset="ultrafast"
     )
 
-    # 4b) burn subtitles into final
+    # 4b) burn subtitles using our on‑disk ASS
     final_tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
     final_tmp.close()
-    burn_subtitles_top(temp_video.name, ass_tmp.name, final_tmp.name, marginV=20)
+    # ass_path is a plain file path—no temp‑file quirks
+    burn_subtitles_top(temp_video.name, ass_path, final_tmp.name, marginV=20)
 
-    # 5) schedule all temps for deletion once response is done
-    for path in [audio_tmp.name, srt_tmp.name, ass_tmp.name, temp_video.name]:
+    # 5) schedule cleanup of *all* files, including our ASS
+    for path in [
+        audio_tmp.name,
+        srt_tmp.name,
+        ass_path,          # <-- now cleaned up too
+        temp_video.name
+    ]:
         background_tasks.add_task(_cleanup, path)
 
     headers = {
         "X-Assistant-ID": asst_id,
-        "X-Thread-ID": thread_id,
+        "X-Thread-ID":   thread_id,
         "Content-Disposition": 'attachment; filename="summary_video.mp4"'
     }
+
+    # schedule final.mp4 cleanup after response
+    background_tasks.add_task(_cleanup, final_tmp.name)
 
     return FileResponse(
         final_tmp.name,
         media_type="video/mp4",
-        headers=headers,
-        background=BackgroundTasks().add_task(_cleanup, final_tmp.name)
+        headers=headers
     )
 
 
