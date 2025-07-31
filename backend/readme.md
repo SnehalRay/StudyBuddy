@@ -44,6 +44,10 @@ Return a job ID immediately; let clients poll or receive a webhook when the fina
 
 Rate-Limiting External APIs
 
+
+
+Need to modify the OpenAI part to use existing threadIDs each time for an uploaded file so that we dont incur insane storage costs across multiple requests from multiple users.
+
 OpenAI and ElevenLabs impose rate limits. Fifty concurrent calls may hit those limits.
 
 Implement exponential back-off, request batching, or a local cache of identical requests.
