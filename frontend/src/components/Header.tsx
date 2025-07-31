@@ -11,6 +11,11 @@ import { useColorMode } from '../theme/ColorModeContext';
 import Avatar from '@mui/material/Avatar';
 import ProfilePopup from './ProfilePopup';
 import { useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
+import { Link as MuiLink } from '@mui/material';
+
+
+
 
 
 // Styled Button for navigation
@@ -62,18 +67,19 @@ export default function Header() {
             <IconButton edge="start" color="inherit" onClick={() => { /* open menu */ }}>
               <MenuIcon />
             </IconButton>
-            <LinkButton href="/">
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                Study<span style={{ fontWeight: 300 }}>Buddy</span>
-              </Typography>
-            </LinkButton>
+            <LinkButton component={RouterLink} to="/">
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              Study<span style={{ fontWeight: 300 }}>Buddy</span>
+            </Typography>
+          </LinkButton>
+
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <IconButton sx={{ ml: 1 }} onClick={toggleColorMode} color="inherit">
               {isDark ? <Brightness7Icon /> : <Brightness4Icon />}
             </IconButton>
-            <LinkButton href="/pricing">
+            <LinkButton component={RouterLink} to="/pricing">
               Pricing
             </LinkButton>
             <IconButton onClick={() => setIsProfileOpen(true)}>

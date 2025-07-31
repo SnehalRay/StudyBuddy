@@ -12,6 +12,7 @@ public class StudybuddyApplication {
 
 	public static void main(String[] args) {
 
+
 		// Load .env before Spring context starts
 		Dotenv dotenv = Dotenv.load();
 		dotenv.entries().forEach(entry ->
