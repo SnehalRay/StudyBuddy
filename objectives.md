@@ -33,7 +33,7 @@ VIDEO GENERATION: => snehal: 3hrs; akhil : 1hr
 SELECTION:
 
 1. DOWNLOAD background VIDEOS as templates => 1hr
-2. download roster voices data => 1day
+2. download roster voices data => 1day ✅
 
 
 ============
