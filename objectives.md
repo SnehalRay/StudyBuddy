@@ -5,7 +5,7 @@ bugs:  => SNEHAL RAY => 1 DAY
 2. oauth bug
 
            
-3. about frontend page publicly accessible / HOMEPAGE => AKHIL => 1 DAY
+3. about frontend page publicly accessible / HOMEPAGE => AKHIL => 1 DAY ✅
 
 4. animation of characters in a carousel => SNEHAL => VIBE CODE EITHER 10 MINS OR 2HRS
 
