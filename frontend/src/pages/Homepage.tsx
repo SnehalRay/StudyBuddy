@@ -7,6 +7,7 @@ import FeatureSection from '../components/FeatureSection';
 import WorkspaceList from '../components/WorkspaceList';
 import CreateWorkspaceCard from '../components/CreateWorkspaceCard';
 import CreateFolderDialog from '../components/CreateFolderDialog';
+import MeetOurCharacters from '../components/MeetOurCharacters';
 
 export default function Homepage() {
   const [folders, setFolders] = useState<FolderType[]>([]);
@@ -74,6 +75,10 @@ export default function Homepage() {
           <CreateWorkspaceCard onClick={() => setIsDialogOpen(true)} />
         </Box>
       </Container>
+      <Container maxWidth="lg" sx={{py:4}}>
+        <MeetOurCharacters/>
+      </Container>
+      
     </Box>
   );
 }
