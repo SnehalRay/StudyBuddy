@@ -19,8 +19,14 @@ export default function App() {
   const { pathname } = useLocation();
 
   // hide Header on Landing, Authentication, and Pricing pages
-  const hideHeaderOn = ['/', '/authentication', '/pricing'];
-  const showHeader = !hideHeaderOn.includes(pathname);
+  // const hideHeaderOn = ['/', '/authentication', '/pricing'];
+  // const showHeader = !hideHeaderOn.includes(pathname);
+
+  const storedUser = localStorage.getItem('user');
+  const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+
+  // Show header only if user exists in localStorage
+  const showHeader = !!parsedUser;
 
   return (
     <>
