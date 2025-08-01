@@ -82,6 +82,9 @@ export default function Header() {
             <LinkButton component={RouterLink} to="/pricing">
               Pricing
             </LinkButton>
+            <LinkButton component={RouterLink} to="/about">
+              About
+            </LinkButton>
             <IconButton onClick={() => setIsProfileOpen(true)}>
               <Avatar alt={name}>{initials}</Avatar>
             </IconButton>

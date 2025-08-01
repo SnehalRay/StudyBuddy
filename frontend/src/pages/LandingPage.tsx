@@ -67,7 +67,7 @@ export default function LandingPage() {
       <CssBaseline />
 
       {/* Navigation */}
-      <AppBar position="static" color="transparent" elevation={0}>
+      {!localStorage.getItem('user') && (<AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>
             StudyBuddy
@@ -88,7 +88,7 @@ export default function LandingPage() {
             </Button>
           </Box>
         </Toolbar>
-      </AppBar>
+      </AppBar>)}
 
       {/* Hero */}
       <Box

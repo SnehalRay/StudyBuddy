@@ -57,6 +57,12 @@ export default function App() {
         <Route path="/pricing" element={<Pricing />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
+
+        <Route
+          path="/about"
+          element={user ? <LandingPage /> : <Navigate to="/" replace />}
+        />
+        
       </Routes>
 
       <ToastContainer />
