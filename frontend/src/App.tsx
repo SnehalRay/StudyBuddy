@@ -12,7 +12,7 @@ import LandingPage from './pages/LandingPage';
 import Homepage from './pages/Homepage';
 import Pricing from './pages/Pricing';    // make sure this path matches your filename
 import WorkbookSessionManager from './hook/WorkbookSessionManager';
-import GlobalRouteGuard from './hook/GlobalRouteGuard';
+
 
 export default function App() {
   const user = useUserStore((state) => state.user);
@@ -24,7 +24,6 @@ export default function App() {
 
   return (
     <>
-      <GlobalRouteGuard/>
       <WorkbookSessionManager />
       {showHeader && <Header />}
 
