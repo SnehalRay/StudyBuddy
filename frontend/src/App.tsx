@@ -24,7 +24,7 @@ export default function App() {
 
   return (
     <>
-      <GlobalRouteGuard/>
+      {/* <GlobalRouteGuard/> */}
       <WorkbookSessionManager />
       {showHeader && <Header />}
 
