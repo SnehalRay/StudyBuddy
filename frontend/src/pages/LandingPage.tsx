@@ -56,9 +56,9 @@ export default function LandingPage() {
 
   const handleGetStarted = () => {
     if (user) {
-      navigate('/app');      // your authenticated homepage route
+      navigate('/app');      // Authenticated homepage route
     } else {
-      navigate('/authentication');  // your login route
+      navigate('/authentication');  // login route
     }
   };
 

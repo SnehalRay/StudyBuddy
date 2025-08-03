@@ -64,9 +64,6 @@ export default function Header() {
       >
         <Toolbar sx={{ justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <IconButton edge="start" color="inherit" onClick={() => { /* open menu */ }}>
-              <MenuIcon />
-            </IconButton>
             <LinkButton component={RouterLink} to="/">
             <Typography variant="h6" sx={{ fontWeight: 700 }}>
               Study<span style={{ fontWeight: 300 }}>Buddy</span>

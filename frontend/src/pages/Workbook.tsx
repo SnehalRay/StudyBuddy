@@ -1,132 +1,222 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
-  Tabs,
-  Tab,
-  Typography,
   Container,
-  Paper
-} from "@mui/material";
-import { useParams, useLocation } from "react-router-dom";
-import "@fontsource/orbitron/700.css";
-import { motion } from "framer-motion";
-import UploadSection from "../components/UploadSection";
-import VoiceGenerationSection from "../components/VoiceGenerationSection";
-import type { FolderType } from "../components/WorkspaceList";
-import api from "../api/axios"; // adjust path if needed
+  Typography,
+  Button,
+  IconButton,
+  TextField,
+  Stack,
+  InputAdornment,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Paper,
+  Divider,
+  useTheme,
+} from '@mui/material';
+import {
+  Add,
+  KeyboardArrowUp,
+  AttachFile,
+  Description as DescriptionIcon,
+} from '@mui/icons-material';
+import api from '../api/axios';
 
+export default function DiscoverPage() {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
-const tabs = ["UPLOAD", "AI SUMMARY", "AI CHAT", "VOICE GENERATION"];
+  const [prompt, setPrompt] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-const WorkbookPage = () => {
-  const [activeTab, setActiveTab] = useState(0);
-  const { id } = useParams(); // fallback id from URL
-  const location = useLocation();
-  const folder = location.state as FolderType | undefined;
+  // --- Upload logic states ---
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<string | null>(null);
+  const [files, setFiles] = useState<{ id: string; name: string }[]>([]);
 
-  const [folderName, setFolderName] = useState<string>("");
+  // Fetch the list of uploaded files
+  const fetchFiles = async () => {
+    try {
+      const resp = await api.get<{ id: string; name: string }[]>('/file/listFiles');
+      setFiles(resp.data);
+    } catch {
+      setFiles([]);
+    }
+  };
 
   useEffect(() => {
-    if (folder?.name) {
-      setFolderName(folder.name);
-    } else if (id) {
-      // fallback fetch by id if location.state is undefined (direct URL access)
-      // TODO: Replace this with actual API call if needed
-      // Example:
-      // fetch(`/api/folder/${id}`).then(res => res.json()).then(data => setFolderName(data.name));
-      setFolderName(`Workspace #${id}`); // Temporary fallback label
-    }
-  }, [folder, id]);
+    fetchFiles();
+  }, []);
 
-    const exitFolder = async () => {
+  // When user clicks the paper-clip
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // When a file is chosen
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files?.[0]) {
+      setSelectedFile(e.target.files[0]);
+      setUploadResult(null);
+    }
+  };
+
+  // POST file to backend
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+    setUploading(true);
+    setUploadResult(null);
+
     try {
-      await api.post("/folder/exitFolder");
-      // Optionally log or handle response
-    } catch (error) {
-      // Optionally log or toast
-      console.error("Error exiting folder", error);
-    }
-  };
-
-    useEffect(() => {
-      const handleBeforeUnload = () => {
-        navigator.sendBeacon && navigator.sendBeacon("/folder/exitFolder")
-      }
-      window.addEventListener("beforeunload", handleBeforeUnload);
-
-      return () => {
-        window.removeEventListener("beforeunload",handleBeforeUnload);
-        console.log("unloading function")
-        // exitFolder();
-        
-      }
-  
-    }, []);
-
-
-
-
-  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 0:
-        return <UploadSection />;
-      case 1:
-        return <Box>AI Summary Component/Section here</Box>;
-      case 2:
-        return <Box>AI Chat Component/Section here</Box>;
-      case 3:
-        return <VoiceGenerationSection />;
-      default:
-        return null;
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      const resp = await api.post<string>('/file/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        withCredentials: true,
+      });
+      setUploadResult(resp.data);
+      setSelectedFile(null);
+      await fetchFiles(); // refresh list
+    } catch (err: any) {
+      setUploadResult(err?.response?.data || 'Upload failed');
+    } finally {
+      setUploading(false);
     }
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 5 }}>
-      <Typography
-        component={motion.h1}
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        variant="h3"
-        fontWeight="bold"
-        sx={{
-          fontFamily: '"Orbitron", sans-serif',
-          mb: 4,
-          textAlign: "center",
-          letterSpacing: 2,
-          textTransform: "uppercase",
-          color: (theme) =>
-            theme.palette.mode === "dark" ? "#D1A4FF" : "#6A1B9A",
-          textShadow:
-            "0 0 10px rgba(209, 164, 255, 0.7), 0 0 20px rgba(186, 104, 200, 0.5)"
-        }}
-      >
-        {folderName || "Folder Name"}
-      </Typography>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        bgcolor: isDark ? 'background.default' : 'background.paper',
+        color: 'text.primary',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 2,
+      }}
+    >
+      <Container maxWidth="sm" sx={{ textAlign: 'center' }}>
+        {/* Heading */}
+        <Typography variant="h4" fontWeight={500} gutterBottom>
+          What are you learning today?
+        </Typography>
 
-      <Tabs
-        value={activeTab}
-        onChange={handleTabChange}
-        centered
-        textColor="primary"
-        indicatorColor="primary"
-        sx={{ mb: 3 }}
-      >
-        {tabs.map((label, index) => (
-          <Tab key={index} label={label} />
-        ))}
-      </Tabs>
+        {/* Character selector */}
+        <Stack direction="row" spacing={1} justifyContent="center" sx={{ mb: 3 }}>
+          <Button variant="outlined" size="small">
+            Select character
+          </Button>
+        </Stack>
 
-      <Paper elevation={3} sx={{ p: 3, borderRadius: 3 }}>
-        {renderTabContent()}
-      </Paper>
-    </Container>
+        {/* Hidden file input */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
+
+        {/* Prompt + upload adornment */}
+        <TextField
+          fullWidth
+          size="small"
+          multiline
+          rows={2}
+          placeholder="What is the powerhouse of the cell?"
+          variant="outlined"
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <IconButton
+                  size="small"
+                  onClick={handleUploadClick}
+                  aria-label="upload file"
+                >
+                  <AttachFile fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            mb: 2,
+            '& .MuiOutlinedInput-root': {
+              backgroundColor: isDark ? 'grey.900' : 'common.white',
+              borderRadius: '16px',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderRadius: '16px',
+              },
+            },
+          }}
+        />
+
+        {/* Show chosen file & upload button */}
+        {selectedFile && (
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle2" noWrap>
+              📄 {selectedFile.name}
+            </Typography>
+            <Button
+              variant="contained"
+              size="small"
+              sx={{ mt: 1 }}
+              onClick={handleUpload}
+              disabled={uploading}
+            >
+              {uploading ? 'Uploading…' : 'Upload'}
+            </Button>
+          </Box>
+        )}
+
+        {/* Upload result message */}
+        {uploadResult && (
+          <Typography
+            variant="body2"
+            sx={{
+              color: uploadResult.startsWith('File uploaded') ? 'success.main' : 'error.main',
+              mb: 2,
+            }}
+          >
+            {uploadResult}
+          </Typography>
+        )}
+
+        {/* List of uploaded files */}
+        <Paper
+          elevation={2}
+          sx={{
+            p: 2,
+            borderRadius: 2,
+            backgroundColor: isDark ? 'grey.900' : 'grey.50',
+          }}
+        >
+          <Typography variant="subtitle1" gutterBottom>
+            Your Files
+          </Typography>
+          <Divider sx={{ mb: 1 }} />
+          {files.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              No files uploaded yet.
+            </Typography>
+          ) : (
+            <List dense disablePadding>
+              {files.map((f) => (
+                <ListItem key={f.id}>
+                  <ListItemIcon>
+                    <DescriptionIcon />
+                  </ListItemIcon>
+                  <ListItemText primary={f.name} />
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </Paper>
+      </Container>
+    </Box>
   );
-};
-
-export default WorkbookPage;
+}
