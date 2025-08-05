@@ -240,7 +240,7 @@ class SummarizeResponse(BaseModel):
     reply: str
 
 @app.post("/summarize-text")
-async def summarize_text(request: Request ,body: SummarizeRequest = Body(...)):
+async def summarize_text(request: Request ,body: SummarizeRequest):
     """
     The summarize feature without using any brainrot. Used only for text summarize
     """
@@ -257,7 +257,7 @@ async def summarize_text(request: Request ,body: SummarizeRequest = Body(...)):
 async def summarize_into_video(
     request: Request,
     background_tasks: BackgroundTasks,
-    body: SummarizeRequest = Body(...),
+    body: SummarizeRequest,
 ):
     """
     1. Summarize + TTS → audio_bytes

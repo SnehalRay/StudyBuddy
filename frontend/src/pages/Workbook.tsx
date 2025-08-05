@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import VideoSummary from '../components/VideoSummary';
 import {
   Box,
   Container,
@@ -20,7 +21,7 @@ import {
   AttachFile,
   Description as DescriptionIcon,
 } from '@mui/icons-material';
-import { pyapi, api } from '../api/axios';
+import { api } from '../api/axios';
 
 export default function DiscoverPage() {
   const theme = useTheme();
@@ -155,6 +156,8 @@ export default function DiscoverPage() {
             },
           }}
         />
+        
+        <VideoSummary prompt={prompt} />
 
         {/* Show chosen file & upload button */}
         {selectedFile && (
