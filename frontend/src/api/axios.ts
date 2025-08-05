@@ -2,10 +2,19 @@ import axios from "axios"
 import useUserStore from "../store/userStore";
 import { matchPath } from "react-router-dom";
 
-const api = axios.create({
+
+// SpringBoot API client, nothing changed kept the same as old code
+export const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8080",
     withCredentials: true, // if you are using cookies/session
 });
+
+
+// new Python API client for listening in on Python Endpoint
+export const pyapi = axios.create({
+  baseURL: import.meta.env.VITE_PYTHON_BASE_URL || "http://localhost:8000",
+  withCredentials: true,
+})
 
 // 👇 Add interceptor
 api.interceptors.response.use(
@@ -49,6 +58,3 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-
-export default api;
