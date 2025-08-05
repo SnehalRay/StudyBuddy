@@ -17,8 +17,6 @@ import {
   useTheme,
 } from '@mui/material';
 import {
-  Add,
-  KeyboardArrowUp,
   AttachFile,
   Description as DescriptionIcon,
 } from '@mui/icons-material';
@@ -109,6 +107,9 @@ export default function DiscoverPage() {
         <Stack direction="row" spacing={1} justifyContent="center" sx={{ mb: 3 }}>
           <Button variant="outlined" size="small">
             Select character
+          </Button>
+          <Button variant="outlined" size="small">
+            Select background
           </Button>
         </Stack>
 
