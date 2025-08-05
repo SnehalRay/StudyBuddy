@@ -1,7 +1,7 @@
 Tasks left to do:
 
 bugs:  => SNEHAL RAY => 1 DAY
-1. cookie bugs
+1. cookie bugs ✅
 2. oauth bug
 
            
@@ -9,30 +9,30 @@ bugs:  => SNEHAL RAY => 1 DAY
 
 4. animation of characters in a carousel => SNEHAL => VIBE CODE EITHER 10 MINS OR 2HRS
 
-5. workbook frontend ui changes (NEED approval) => AKHIL => 1 DAY
+5. workbook frontend ui changes (NEED approval) => AKHIL => 1 DAY ✅
 
 VIDEO GENERATION: => snehal: 3hrs; akhil : 1hr
 
 1. Video has no expiry => snehal 
 2. Video stored in AWS => snehal
-3. change ui of the vid gen => akhil
+3. change ui of the vid gen => akhil 
 
 
 => OPEN AI SUMMARY OF THE DOC (need approval) => Akhil => 3-4hrs ✅
 
 => postgres hosted on aws => Snehal => 5hrs ✅
 
-=> image character pic => s3 integration => Snehal => 2hrs => elevenlabid is the key/folder name
+=> image character pic => s3 integration => Snehal => 2hrs => elevenlabid is the key/folder name ✅
 
 => stich image to video dynamically => Akhil (dependent on me) => 1hr
 
-=> SELECT VIDEO AND character template in the work space => AKHIL => 2hr
+=> SELECT VIDEO AND character template in the work space => AKHIL => 2hr ✅
 
 ============
 
 SELECTION:
 
-1. DOWNLOAD background VIDEOS as templates => 1hr
+1. DOWNLOAD background VIDEOS as templates => 1hr 
 2. download roster voices data => 1day ✅
 
 
