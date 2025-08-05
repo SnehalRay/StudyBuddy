@@ -11,7 +11,7 @@ import {
   Box
 } from '@mui/material';
 import { toast } from "react-toastify";
-import api from '../api/axios';
+import { api } from '../api/axios';
 
 
 type ProfilePopupProps = {

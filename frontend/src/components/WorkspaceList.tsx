@@ -5,7 +5,7 @@ import { styled, alpha, useTheme } from '@mui/material/styles';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { useNavigate } from 'react-router-dom';
-import api from "../api/axios";
+import { api } from "../api/axios";
 import { toast } from "react-toastify";
 
 export interface FolderType {

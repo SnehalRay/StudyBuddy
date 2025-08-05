@@ -16,7 +16,7 @@ export const pyapi = axios.create({
   withCredentials: true,
 })
 
-// 👇 Add interceptor
+// Add interceptor
 api.interceptors.response.use(
   response => response,
   error => {

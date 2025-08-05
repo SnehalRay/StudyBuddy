@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import useUserStore from "../store/userStore";
-import api from "../api/axios";
+import { api } from '../api/axios';
 
 export default function OAuth2RedirectHandler(){
     const navigate = useNavigate();

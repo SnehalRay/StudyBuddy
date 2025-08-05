@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, Box } from '@mui/material';
 import type { FolderType } from '../components/WorkspaceList';
-import api from '../api/axios';
+import { api } from '../api/axios';
 
 import FeatureSection from '../components/FeatureSection';
 import WorkspaceList from '../components/WorkspaceList';

@@ -14,7 +14,7 @@ import {
 import DescriptionIcon from "@mui/icons-material/Description";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import "@fontsource/orbitron/700.css";
-import api from "../api/axios";
+import { api } from "../api/axios";
 
 const UploadSection = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);

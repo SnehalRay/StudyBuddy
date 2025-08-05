@@ -10,7 +10,7 @@ import {
 } from "@mui/material"
 import { Google as GoogleIcon } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
-import api from "../api/axios";
+import { api } from "../api/axios";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import useUserStore from '../store/userStore';

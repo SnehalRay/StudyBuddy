@@ -20,7 +20,7 @@ import {
   AttachFile,
   Description as DescriptionIcon,
 } from '@mui/icons-material';
-import api from '../api/axios';
+import { pyapi, api } from '../api/axios';
 
 export default function DiscoverPage() {
   const theme = useTheme();
