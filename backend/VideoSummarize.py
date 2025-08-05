@@ -14,7 +14,7 @@ from openai import OpenAI
 from elevenlabs import ElevenLabs
 
 
-from fastapi import FastAPI, UploadFile, Form, HTTPException, Request, BackgroundTasks, Depends
+from fastapi import FastAPI, UploadFile, Body, HTTPException, Request, BackgroundTasks, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 from dotenv import load_dotenv
@@ -231,27 +231,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class Response(BaseModel):
+class SummarizeRequest(BaseModel):
+    prompt: str = "Summarize"
+
+class SummarizeResponse(BaseModel):
     assistant_id: str
     thread_id: str
     reply: str
 
 @app.post("/summarize-text")
-async def summarize_text(request: Request ,prompt: str = "Summarize"):
+async def summarize_text(request: Request ,body: SummarizeRequest = Body(...)):
     """
     The summarize feature without using any brainrot. Used only for text summarize
     """
     cookie_header = request.headers.get("cookie", "")
-    asst_id, thread_id, script = summarize(cookie_header, prompt)
-    return script
+    asst_id, thread_id, script = summarize(cookie_header, body.prompt)
 
-# Cookie Header is set to String and not Cookie as we are manually parsing our cookie via helper functions.
+    return SummarizeResponse(
+        assistant_id=asst_id,
+        thread_id=thread_id,
+        reply=script,
+    )
 
 @app.post("/summarize-into-video/")
 async def summarize_into_video(
     request: Request,
     background_tasks: BackgroundTasks,
-    prompt: str = "Summarize",
+    body: SummarizeRequest = Body(...),
 ):
     """
     1. Summarize + TTS → audio_bytes
@@ -263,7 +269,7 @@ async def summarize_into_video(
     cookie_header = request.headers.get("cookie", "")
     # 0) get script & audio
     try:
-        asst_id, thread_id, script, audio_bytes = summarize(cookie_header, prompt, video=True)
+        asst_id, thread_id, script, audio_bytes = summarize(cookie_header, body.prompt, video=True)
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -301,7 +307,7 @@ async def summarize_into_video(
 
     # 3) convert SRT → ASS, but write to a “normal” file instead of NamedTemporaryFile
     # UUID thing makes it random
-    # What if UUID gives the same name
+    # TODO What if UUID gives the same name
     ass_filename = f"subs_{uuid.uuid4().hex}.ass"
     ass_path = ass_filename
     # srt_tmp.name is your .srt; write out the .ass here:
@@ -333,7 +339,7 @@ async def summarize_into_video(
     for path in [
         audio_tmp.name,
         srt_tmp.name,
-        ass_path,          # <-- now cleaned up too
+        ass_path,      
         temp_video.name
     ]:
         background_tasks.add_task(_cleanup, path)
@@ -341,7 +347,7 @@ async def summarize_into_video(
     headers = {
         "X-Assistant-ID": asst_id,
         "X-Thread-ID":   thread_id,
-        "Content-Disposition": 'attachment; filename="summary_video.mp4"'
+        "Content-Disposition": 'inline; filename="summary_video.mp4"' # Inline argument lets me embed this video into user's browser
     }
 
     # schedule final.mp4 cleanup after response
