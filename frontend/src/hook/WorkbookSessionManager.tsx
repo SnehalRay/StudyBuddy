@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useLocation, matchPath } from "react-router-dom";
-import api from "../api/axios";
+import { api } from "../api/axios";
 
 
 // ----------------------------------------------------
