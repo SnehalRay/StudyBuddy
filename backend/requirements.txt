@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+boto3
+python-dotenv
+openai
+elevenlabs
+moviepy

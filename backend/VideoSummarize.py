@@ -14,11 +14,14 @@ from openai import OpenAI
 from elevenlabs import ElevenLabs
 
 
-from fastapi import FastAPI, UploadFile, Form, HTTPException, Request, BackgroundTasks
+from fastapi import FastAPI, UploadFile, Form, HTTPException, Request, BackgroundTasks, Depends
+from fastapi.middleware.cors import CORSMiddleware
 
 from dotenv import load_dotenv
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+
+
 
 
 # ────────────────────────────── OpenAI Configuration ───────────────────────────────
@@ -192,7 +195,8 @@ def summarize(cookie_header: str, prompt: str = "Summarize", video: bool = False
     items = resp.get("Contents", [])
     if not items:
         raise HTTPException(404, f"No files under {folder}/")
-    key = items[0]["Key"]
+    # Change to use the file that was picked by the user
+    key = items[0]["Key"] 
     raw = download_s3_object(key)
 
     # 3. wrap & upload to OpenAI
@@ -219,16 +223,25 @@ def summarize(cookie_header: str, prompt: str = "Summarize", video: bool = False
 
 app = FastAPI(title="TextExtract")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # React app origin
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 class Response(BaseModel):
     assistant_id: str
     thread_id: str
     reply: str
 
 @app.post("/summarize-text")
-async def summarize_text(prompt: str = "Summarize", cookie_header: str = Request):
+async def summarize_text(request: Request ,prompt: str = "Summarize"):
     """
     The summarize feature without using any brainrot. Used only for text summarize
     """
+    cookie_header = request.headers.get("cookie", "")
     asst_id, thread_id, script = summarize(cookie_header, prompt)
     return script
 
@@ -236,9 +249,9 @@ async def summarize_text(prompt: str = "Summarize", cookie_header: str = Request
 
 @app.post("/summarize-into-video/")
 async def summarize_into_video(
+    request: Request,
     background_tasks: BackgroundTasks,
     prompt: str = "Summarize",
-    cookie_header: str = Request,
 ):
     """
     1. Summarize + TTS → audio_bytes
@@ -247,6 +260,7 @@ async def summarize_into_video(
     4. Load bg1.mp4, replace audio, burn in subtitles → final.mp4
     5. Stream final.mp4 back, then clean up all temps
     """
+    cookie_header = request.headers.get("cookie", "")
     # 0) get script & audio
     try:
         asst_id, thread_id, script, audio_bytes = summarize(cookie_header, prompt, video=True)
@@ -287,6 +301,7 @@ async def summarize_into_video(
 
     # 3) convert SRT → ASS, but write to a “normal” file instead of NamedTemporaryFile
     # UUID thing makes it random
+    # What if UUID gives the same name
     ass_filename = f"subs_{uuid.uuid4().hex}.ass"
     ass_path = ass_filename
     # srt_tmp.name is your .srt; write out the .ass here:
