@@ -9,7 +9,7 @@ bugs:  => SNEHAL RAY => 1 DAY
 
 4. animation of characters in a carousel => SNEHAL => VIBE CODE EITHER 10 MINS OR 2HRS
 
-5. workbook frontend ui changes (NEED approval) => AKHIL => 1 DAY 
+5. workbook frontend ui changes (NEED approval) => AKHIL => 1 DAY ✅
 
 VIDEO GENERATION: => snehal: 3hrs; akhil : 1hr
 
@@ -26,7 +26,7 @@ VIDEO GENERATION: => snehal: 3hrs; akhil : 1hr
 
 => stich image to video dynamically => Akhil (dependent on me) => 1hr
 
-=> SELECT VIDEO AND character template in the work space => AKHIL => 2hr
+=> SELECT VIDEO AND character template in the work space => AKHIL => 2hr ✅
 
 ============
 
