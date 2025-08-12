@@ -74,7 +74,7 @@ public class SecurityConfig {
 
                 .cors().and().csrf().disable()
                 .authorizeHttpRequests()
-                .requestMatchers("/signup", "/login","/logout","/verifyToken","/folder/create","/folder/open","/folder/exitFolder","/upload/files","/file/upload", "/folder/listFolders","/edit-profile","/file/listFiles","/voiceCharacter/addVoices").permitAll()
+                .requestMatchers("/signup", "/login","/logout","/verifyToken","/folder/create","/folder/open","/folder/exitFolder","/upload/files","/file/upload", "/folder/listFolders","/edit-profile","/file/listFiles","/voiceCharacter/addVoices","/folder/listCurrentFolderId").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .logout().disable()
