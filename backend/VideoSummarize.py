@@ -14,7 +14,7 @@ from openai import OpenAI
 from elevenlabs import ElevenLabs
 
 
-from fastapi import FastAPI, UploadFile, Body, HTTPException, Request, BackgroundTasks, Depends
+from fastapi import FastAPI, UploadFile, Body, HTTPException, Request, BackgroundTasks, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from dotenv import load_dotenv
@@ -181,16 +181,15 @@ def generate_tts(script: str) -> bytes:
         buf.write(chunk)
     return buf.getvalue()
 
-def summarize(cookie_header: str, prompt: str = "Summarize", video: bool = False):
+def summarize(folder: str, prompt: str = "Summarize", video: bool = False):
     # First we need to insert the character details into the prompt if its video mode
     if video:
         prompt = prompt + "Create a transcript of you explaining the topic as if you are (Replace with character name). "
         "Litter brainrot terms to the transcript to make it more appealing to GenZ" \
         " Incorporate the character's speaking style as well as slangs/mannerisms and try to explain with analogies common to the character." \
         "Return only the transcript of the explanation with no character names in it or symbols"
-    # 1. extract folderSession
-    folder = get_fileid(cookie_header)
-    # 2. list & download first object
+
+    # 1. list & download first object TODO: CHANGE TO PICK THE SPECIFIC FILE
     resp = s3.list_objects_v2(Bucket=S3_BUCKET, Prefix=f"{folder}/")
     items = resp.get("Contents", [])
     if not items:
@@ -225,27 +224,44 @@ app = FastAPI(title="TextExtract")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # React app origin
+    allow_origins=["http://localhost:5173"],  # React app origin
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 class SummarizeRequest(BaseModel):
-    prompt: str = "Summarize"
+    folderID: str
+    prompt: str
 
 class SummarizeResponse(BaseModel):
     assistant_id: str
     thread_id: str
     reply: str
 
-@app.post("/summarize-text")
+
+# Method for debugging incoming and outgoing requests
+@app.middleware("http")
+async def debug_requests(request: Request, call_next):
+    print(f"🔍 INCOMING: {request.method} {request.url.path!r}")
+    response = await call_next(request)
+    print(f"🔍 RESPONSE: {response.status_code} for {request.method} {request.url.path!r}\n")
+    return response
+
+@app.on_event("startup")
+def list_routes():
+    from pprint import pprint
+    pprint(
+        [{"methods":r.methods, "path":r.path} for r in app.routes]
+    )
+
+@app.post("/summarize-text/")
 async def summarize_text(request: Request ,body: SummarizeRequest):
     """
     The summarize feature without using any brainrot. Used only for text summarize
     """
-    cookie_header = request.headers.get("cookie", "")
-    asst_id, thread_id, script = summarize(cookie_header, body.prompt)
+    folder_id = (body.folderID or "").strip()
+    asst_id, thread_id, script = summarize(folder_id, body.prompt, video=False)
 
     return SummarizeResponse(
         assistant_id=asst_id,
@@ -254,6 +270,7 @@ async def summarize_text(request: Request ,body: SummarizeRequest):
     )
 
 @app.post("/summarize-into-video/")
+#@app.options("/summarize-into-video/", include_in_schema=False)
 async def summarize_into_video(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -266,10 +283,12 @@ async def summarize_into_video(
     4. Load bg1.mp4, replace audio, burn in subtitles → final.mp4
     5. Stream final.mp4 back, then clean up all temps
     """
-    cookie_header = request.headers.get("cookie", "")
+    # Get the folderID from the frontend:
+    folder_id = (body.folderID or "").strip()
+
     # 0) get script & audio
     try:
-        asst_id, thread_id, script, audio_bytes = summarize(cookie_header, body.prompt, video=True)
+        asst_id, thread_id, script, audio_bytes = summarize(folder_id, body.prompt, video=True)
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -331,9 +350,10 @@ async def summarize_into_video(
 
     # 4b) burn subtitles using our on‑disk ASS
     final_tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
+    final_path = final_tmp.name
     final_tmp.close()
     # ass_path is a plain file path—no temp‑file quirks
-    burn_subtitles_top(temp_video.name, ass_path, final_tmp.name, marginV=20)
+    burn_subtitles_top(temp_video.name, ass_path, final_path, marginV=20)
 
     # 5) schedule cleanup of *all* files, including our ASS
     for path in [
@@ -354,7 +374,7 @@ async def summarize_into_video(
     background_tasks.add_task(_cleanup, final_tmp.name)
 
     return FileResponse(
-        final_tmp.name,
+        final_path,
         media_type="video/mp4",
         headers=headers
     )

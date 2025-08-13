@@ -1,16 +1,19 @@
 // src/components/VideoSummary.tsx
 import React, { useState } from 'react';
-import { Box, Button, CircularProgress, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Typography, Stack, Chip } from '@mui/material';
 import { pyapi } from '../api/axios';
+import useFolderId from '../hook/useFolderId';
 
 interface VideoSummaryProps {
   prompt: string;
 }
 
 export default function VideoSummary({ prompt }: VideoSummaryProps) {
-  const [loading, setLoading] = useState(false);
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { folderId, loading: folderLoading, error: folderError, refresh } = useFolderId();
+
+  const [loading, setLoading]     = useState(false);
+  const [videoUrl, setVideoUrl]   = useState<string | null>(null);
+  const [error, setError]         = useState<string | null>(null);
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -18,15 +21,27 @@ export default function VideoSummary({ prompt }: VideoSummaryProps) {
     setVideoUrl(null);
 
     try {
+      if (!folderId) {
+        throw new Error(folderError || 'Folder ID not available. Open a folder first.');
+      }
+
+      // Python expects: { folderID: string, prompt: string }
       const resp = await pyapi.post(
-        '/summarize-into-video/',
-        { prompt },
-        { responseType: 'blob' }
+        '/summarize-into-video',
+        { folderID: folderId, prompt },
+        { responseType: 'blob', withCredentials: true }
       );
+
       const url = URL.createObjectURL(resp.data);
       setVideoUrl(url);
     } catch (e: any) {
-      setError(e.response?.data?.detail || 'Failed to generate video');
+      console.error('Video generation error:', e);
+      const msg =
+        e?.response?.data?.detail ||
+        (typeof e?.response?.data === 'string' ? e.response.data : null) ||
+        e?.message ||
+        'Failed to generate video';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -34,7 +49,28 @@ export default function VideoSummary({ prompt }: VideoSummaryProps) {
 
   return (
     <Box sx={{ mt: 4, textAlign: 'center' }}>
+      <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
+        <Typography variant="body2">Folder ID:</Typography>
+        {folderLoading ? (
+          <Chip label="Resolving..." />
+        ) : folderId ? (
+          <Chip color="success" variant="outlined" label={folderId} />
+        ) : (
+          <Chip color="warning" variant="outlined" label="Not resolved" />
+        )}
+        <Button size="small" onClick={refresh} disabled={folderLoading}>
+          {folderLoading ? 'Refreshing…' : 'Refresh'}
+        </Button>
+      </Stack>
+
+      {folderError && (
+        <Typography color="error" sx={{ mt: 1 }}>
+          {folderError}
+        </Typography>
+      )}
+
       <Button
+        sx={{ mt: 2 }}
         variant="contained"
         onClick={handleGenerate}
         disabled={loading || !prompt.trim()}
