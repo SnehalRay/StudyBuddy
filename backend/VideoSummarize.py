@@ -352,6 +352,8 @@ async def summarize_into_video(
         threads=4,
         preset="ultrafast"
     )
+    clip.close()
+    audio_clip.close()
 
     # 4b) burn subtitles using our on‑disk ASS
     final_tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
