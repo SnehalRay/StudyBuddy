@@ -48,8 +48,13 @@ TTS_MODEL = "eleven_multilingual_v2"
 def _cleanup(path: str):
     try:
         os.remove(path)
-    except OSError:
-        pass
+        print(f"🧹 deleted: {path}")
+    except FileNotFoundError:
+        print(f"⚠️ not found: {path}")
+    except PermissionError as e:
+        print(f"🔒 in use: {path} ({e})")
+    except Exception as e:
+        print(f"❗ cleanup failed for {path}: {e}")
 
 def upload_file(upload: UploadFile) -> str:
     "returns file id of uploaded file"
