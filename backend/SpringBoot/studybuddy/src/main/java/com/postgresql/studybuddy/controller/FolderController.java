@@ -18,6 +18,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -194,6 +195,69 @@ public class FolderController {
 
         // Return as JSON
         return ResponseEntity.ok(folders);
+    }
+
+
+    /**
+     *
+     * This controller is responsible to return the current folder id
+     *
+     * */
+
+    @GetMapping("/listCurrentFolderId")
+    public ResponseEntity<?> getFolderFromCookie(HttpServletRequest request){
+        try{
+
+            // 1. Get the folderSession cookie
+            String folderCookie = null;
+            if (request.getCookies() != null) {
+                for (var cookie : request.getCookies()) {
+                    if ("folderSession".equals(cookie.getName())) {
+                        folderCookie = cookie.getValue();
+                        break;
+                    }
+                }
+            }
+
+            if (folderCookie == null || folderCookie.isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Missing folderSession cookie.");
+            }
+
+            // 2. Decode it
+            String decoded = java.net.URLDecoder.decode(folderCookie, java.nio.charset.StandardCharsets.UTF_8);
+            if (!decoded.contains("#")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid folderSession format.");
+            }
+
+            String[] parts = decoded.split("#", 2);
+            String folderName = parts[0];
+            String email = parts[1];
+
+            // 3. Find user
+            var userOpt = userRepo.findByEmail(email);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found for cookie.");
+            }
+
+            // 4. Find folder by name and owner
+            Optional<Folder> folderOpt = folderRepo.findByNameAndOwner(folderName, userOpt.get());
+            if (folderOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Folder not found.");
+            }
+
+            // 5. Return the folder ID (and name for convenience)
+            Folder folder = folderOpt.get();
+            return ResponseEntity.ok(Map.of(
+                    "id", folder.getId(),
+                    "name", folder.getName()
+            ));
+
+
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error fetching folder from cookie: " + e.getMessage());
+        }
     }
 
 
