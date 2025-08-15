@@ -355,7 +355,7 @@ async def summarize_into_video(
 
     # 0) get script & audio
     try:
-        asst_id, thread_id, script, audio_bytes = summarize(folder_id, body.prompt, video=True)
+        asst_id, thread_id, script, audio_bytes = summarize(character, folder_id, body.prompt, video=True)
     except HTTPException as e:
         raise e
     except Exception as e:
