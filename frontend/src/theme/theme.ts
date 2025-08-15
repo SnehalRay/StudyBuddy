@@ -13,7 +13,7 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
           },
         }
       : {
-          background: { default: "#101010" },
+          background: { default: "#1e1b1bff" },
           primary: {
             main: "#8a2be2", // fallback purple
           },
