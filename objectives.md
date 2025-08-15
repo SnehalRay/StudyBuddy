@@ -43,8 +43,8 @@ ROSTER:
 1. Peter Griffin
 2. CaseOh
 3. Master Oogway
-4. Ronaldo 
-5. Modi
+4. Rahul Gandhi (Need to change)
+5. Speed (need to change)
 6. Sydney Sweeney
 
 ========================
