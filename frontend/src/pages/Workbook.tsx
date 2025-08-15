@@ -16,12 +16,15 @@ import {
   Paper,
   Divider,
   useTheme,
+  Chip
 } from '@mui/material';
 import {
   AttachFile,
   Description as DescriptionIcon,
 } from '@mui/icons-material';
 import { api } from '../api/axios';
+import CharacterPickerDialog from '../components/CharacterPickerDialog';
+import { characters, type Character } from '../components/characters';
 
 export default function DiscoverPage() {
   const theme = useTheme();
@@ -29,6 +32,10 @@ export default function DiscoverPage() {
 
   const [prompt, setPrompt] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // --- Character picker state ---
+  const [isCharDialogOpen, setIsCharDialogOpen] = useState(false);
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
 
   // --- Upload logic states ---
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -106,13 +113,17 @@ export default function DiscoverPage() {
 
         {/* Character selector */}
         <Stack direction="row" spacing={1} justifyContent="center" sx={{ mb: 3 }}>
-          <Button variant="outlined" size="small">
+          <Button variant="outlined" size="small" onClick={() => setIsCharDialogOpen(true)}>
             Select character
           </Button>
           <Button variant="outlined" size="small">
             Select background
           </Button>
+
+          {/* Show chosen character summary (if any) */}
         </Stack>
+
+        
 
         {/* Hidden file input */}
         <input
@@ -221,6 +232,13 @@ export default function DiscoverPage() {
           )}
         </Paper>
       </Container>
+      {/* Character dialog */}
+      <CharacterPickerDialog
+        open={isCharDialogOpen}
+        onClose={() => setIsCharDialogOpen(false)}
+        onSelect={(c) => setSelectedCharacter(c)}
+        characters={characters}
+      />
     </Box>
   );
 }
